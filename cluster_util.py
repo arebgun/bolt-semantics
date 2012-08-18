@@ -24,11 +24,7 @@ successorTuple = namedtuple('successorTuple',['cost','members','uuid'])
     
     
 def create_distance_matrix(data):
-    BoundingBoxes = []
-    for i in data:
-        minvec = Vec2(i[2][0],i[2][1])
-        maxvec = Vec2(i[3][0],i[3][1])
-        BoundingBoxes.append(BoundingBox((minvec,maxvec)))
+    BoundingBoxes = convert_to_bboxes(data)
     distance_array=[]
     for i in BoundingBoxes:
         row = []
@@ -36,7 +32,21 @@ def create_distance_matrix(data):
             row.append(landmark.bb_to_bb_distance(i,j))
         distance_array.append(row)
     return distance_array
+
+def convex_hull(data):
+    BoundingBoxes = convert_to_bboxes(data)
+    points = map(lambda x: x.center,BoundingBoxes)
+    print points
+    
         
+def convert_to_bboxes(data):
+    print data
+    BoundingBoxes = []
+    for i in data:
+        minvec = Vec2(i[2][0],i[2][1])
+        maxvec = Vec2(i[3][0],i[3][1])
+        BoundingBoxes.append(BoundingBox((minvec,maxvec)))
+    return BoundingBoxes
         
 def findDistance(vector1,vector2):
     '''euclidian distance between 2 points'''
@@ -66,8 +76,6 @@ class Bundle(object):
     def __iter__(self):
         for i in self.members:
             yield i
-    def __str__(self):
-        return 'members:'+str(members)+'cost'+str(cost)
     def __len__(self):
         return len(self.members)
         

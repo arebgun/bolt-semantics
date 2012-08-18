@@ -43,7 +43,6 @@ def dbscan(data):
     X,ids,bbmin,bbmax = zip(*data)
     distance_array=cluster_util.create_distance_matrix(data)
 
-    D = distance.squareform(distance.pdist(X))
     
     S = 1 - (distance_array / np.max(distance_array))
     db = DBSCAN(min_samples=4).fit(S)
