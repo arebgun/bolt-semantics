@@ -41,17 +41,7 @@ def clustercost(data):
 
 def dbscan(data):
     X,ids,bbmin,bbmax = zip(*data)
-    BoundingBoxes = []
-    for i in data:
-        minvec = Vec2(i[2][0],i[2][1])
-        maxvec = Vec2(i[3][0],i[3][1])
-        BoundingBoxes.append(BoundingBox((minvec,maxvec)))
-    distance_array=[]
-    for i in BoundingBoxes:
-        row = []
-        for j in BoundingBoxes:
-            row.append(landmark.bb_to_bb_distance(i,j))
-        distance_array.append(row)
+    distance_array=cluster_util.create_distance_matrix(data)
 
     D = distance.squareform(distance.pdist(X))
     

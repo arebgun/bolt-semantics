@@ -3,6 +3,8 @@ from collections import namedtuple
 import numpy as np
 from uuid import uuid4
 import math
+from planar import BoundingBox,Vec2
+import landmark
 
 
 def totuple(a):
@@ -21,7 +23,21 @@ GroupAttributes = namedtuple('groupAttributes',['cost','type','density'])
 successorTuple = namedtuple('successorTuple',['cost','members','uuid'])
     
     
-    
+def create_distance_matrix(data):
+    BoundingBoxes = []
+    for i in data:
+        minvec = Vec2(i[2][0],i[2][1])
+        maxvec = Vec2(i[3][0],i[3][1])
+        BoundingBoxes.append(BoundingBox((minvec,maxvec)))
+    distance_array=[]
+    for i in BoundingBoxes:
+        row = []
+        for j in BoundingBoxes:
+            row.append(landmark.bb_to_bb_distance(i,j))
+        distance_array.append(row)
+    return distance_array
+        
+        
 def findDistance(vector1,vector2):
     '''euclidian distance between 2 points'''
     return np.round(math.sqrt(np.sum(np.square(vector2-vector1))),3) 
