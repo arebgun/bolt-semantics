@@ -4,6 +4,8 @@ Created on Jul 5, 2012
 @author: colinwinslow
 '''
 
+#tiny change
+
 import numpy as np
 
 from scipy.spatial import distance
