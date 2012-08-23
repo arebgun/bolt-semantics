@@ -14,13 +14,33 @@ def totuple(a):
     except TypeError:
         return a
     
+class PhysicalObject:
+    def __init__(self,id,position,bbmin,bbmax):  
+        self.id = id
+        self.position = position
+        self.bbmin = bbmin
+        self.bbmax = bbmax
+        self.uuid = uuid4()
+        self.listOfFields = [self.id,self.position,self.bbmin,self.bbmax]
+    def __iter__(self):
+        for i in self.listOfFields:
+            yield i
     
-PhysicalObject = namedtuple('physicalObject', ['id', 'position', 'bbmin', 'bbmax'])  
+#PhysicalObject = namedtuple('physicalObject', ['id', 'position', 'bbmin', 'bbmax'])  
 ClusterParams = namedtuple("ClusterParams",['chain_distance_limit', 'angle_limit', 'min_line_length',
                'anglevar_weight', 'distvar_weight','dist_weight',
                'allow_intersection','beam_width','attempt_dnc'])
-GroupAttributes = namedtuple('groupAttributes',['cost','type','density'])
-successorTuple = namedtuple('successorTuple',['cost','members','uuid'])
+#GroupAttributes = namedtuple('groupAttributes',['cost','type','density'])
+
+class successorTuple:
+    def __init__(self,cost,members,uuid):  
+        self.cost=cost
+        self.members = members
+        self.uuid = uuid
+        self.listOfFields = [self.cost,self.members,self.uuid]
+    def __iter__(self):
+        for i in self.listOfFields:
+            yield i
     
     
 def create_distance_matrix(data):
@@ -40,15 +60,16 @@ def convex_hull(data):
     
         
 def convert_to_bboxes(data):
-    print data
     BoundingBoxes = []
     for i in data:
-        minvec = Vec2(i[2][0],i[2][1])
-        maxvec = Vec2(i[3][0],i[3][1])
+        minvec = Vec2(i.bbmin[0],i.bbmin[1])
+        maxvec = Vec2(i.bbmax[0],i.bbmax[1])
         BoundingBoxes.append(BoundingBox((minvec,maxvec)))
     return BoundingBoxes
         
 def findDistance(vector1,vector2):
+    vector1 = np.array(vector1)
+    vector2 = np.array(vector2)
     '''euclidian distance between 2 points'''
     return np.round(math.sqrt(np.sum(np.square(vector2-vector1))),3) 
 

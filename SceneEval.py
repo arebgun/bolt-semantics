@@ -35,8 +35,9 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
     evaluate the whole thing with bundle search
     '''
     reducedObjectSet = copy(inputObjectSet)
-    
-    clusterCandidates = clustercost(dbscan(np.array(map(lambda x: (x.position,x.id,x.bbmin,x.bbmax),inputObjectSet))))
+    distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
+    clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix))
+#    print 'clustercandidates',clusterCandidates
     
     innerLines = []
     #search for lines inside large clusters
@@ -58,21 +59,35 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
                 for x in reducedObjectSet:
                     if x.id == id:
                         reducedObjectSet.remove(x)
+        ReducedDistanceMatrix = cluster_util.create_distance_matrix(reducedObjectSet)
 
     lineCandidates = findChains(reducedObjectSet,params)
-    
+
     allCandidates = clusterCandidates[0]+clusterCandidates[1] + lineCandidates + innerLines
     groupDictionary = dict()
     for i in allCandidates:
         groupDictionary[i.uuid]=i
     evali = bundleSearch(cluster_util.totuple(inputObjectSet), allCandidates, params.allow_intersection, params.beam_width)   
     #find the things in evali that aren't in the dictionary ,and make a singleton group out of them, and add it to the output
+#    print "evali", evali
+    
+    physicalobjects = []
+    for i in evali:
+        try:
+            physicalobjects.append(groupDictionary[i])
+        except:
+            print "not in dictionary"
     output = map(lambda x: groupDictionary.get(x),evali)
+#    print "done makign groups"
+#    print physicalobjects
     return output
     
 
-def findChains(inputObjectSet, params ):
+def findChains(inputObjectSet, params, distanceMatrix = -1 ):
     '''finds all the chains, then returns the ones that satisfy constraints, sorted from best to worst.'''
+
+    if distanceMatrix == -1:
+        distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
   
     bestlines = []
     explored = set()
@@ -81,7 +96,7 @@ def findChains(inputObjectSet, params ):
     for pair in pairwise:
         start,finish = pair[0],pair[1]
         if frozenset([start.id,finish.id]) not in explored:
-            result = chainSearch(start, finish, inputObjectSet,params)
+            result = chainSearch(start, finish, inputObjectSet,params,distanceMatrix)
             if result != None: 
                 bestlines.append(result)
                 s = map(frozenset,cluster_util.find_pairs(result[0:len(result)-1]))
@@ -103,7 +118,9 @@ def findChains(inputObjectSet, params ):
     return output
     
             
-def chainSearch(start, finish, points,params):
+def chainSearch(start, finish, points, params, distanceMatrix):
+    # Passing distancematrix in here to let us reuse it over and over for
+    # calculating successor costs. Need to actually implement that, though. 
     node = Node(start, -1, [], 0,0)
     frontier = PriorityQueue()
     frontier.push(node, 0)
@@ -126,16 +143,16 @@ def chainSearch(start, finish, points,params):
 
 def oldAngleCost(a, b, c):
     '''angle cost of going to c given we came from ab'''
-    abDir = b - a
-    bcDir = c - b
+    abDir = np.array(b) - np.array(a)
+    bcDir = np.array(c) - np.array(b)
     difference = cluster_util.findAngle(abDir, bcDir)
     if np.isnan(difference): return 0
     else: return np.abs(difference)
     
 def angleCost(a, b, c, d):
     '''prefers straighter lines'''
-    abDir = b - a
-    cdDir = d - c
+    abDir = np.array(b) - np.array(a)
+    cdDir = np.array(d) - np.array(c)
     difference = cluster_util.findAngle(abDir, cdDir)
     if np.isnan(difference): return 0
     else: return np.abs(difference)
@@ -187,7 +204,8 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
                 frontier.push(child, child.cost)
             elif frontier.contains(child.state) and frontier.pathCost(child.state) > child.cost:
                 
-                frontier.push(child,child.cost)        
+                frontier.push(child,child.cost)
+#    print "path",path
     return path
     
 class Node:
@@ -249,7 +267,6 @@ class Node:
         cost = self.qCost#/cardinality
         solution.reverse()
         solution.append(cost)
-
         return solution
 
 class BNode:
@@ -276,9 +293,10 @@ class BNode:
         successors = []
 
         for g in groups:
+            memtup = cluster_util.totuple(g.members)
 
-            if len(self.state.intersection(g.members))<=allow_intersection:
-                asd=BNode(self.state.union(g.members),self,cluster_util.successorTuple(g.cost,g.members,g.uuid),g.cost)
+            if len(self.state.intersection(memtup))<=allow_intersection:
+                asd=BNode(self.state.union(memtup),self,g.uuid,g.cost)
                 if asd.gain > 0:
                     successors.append(asd)
         return successors
@@ -288,14 +306,12 @@ class BNode:
         solution = []
         node = self
         while node.parent != -1:
-#            solution.append(node.action[1])
-            solution.append(node.action.uuid)
-
+            solution.append(node.action)
             node = node.parent
         cardinality = len(solution)-1 #exclude the first node, which has cost 0
-        cost = self.cost#/cardinality
+        cost = self.cost
         solution.reverse()
-        #solution.append(cost)
+
 
         return solution
     

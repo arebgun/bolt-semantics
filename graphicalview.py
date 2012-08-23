@@ -125,7 +125,7 @@ class PlaygroundWindow:
         self.c.delete("line")
         searchMe = []
         for o in self.c.find_all():
-            searchMe.append(PhysicalObject(o,np.array(self.c.coords(o)[0:2]),np.array(self.c.coords(o)[0:2]),np.array(self.c.coords(o)[2:4])))
+            searchMe.append(PhysicalObject(o,self.c.coords(o)[0:2],self.c.coords(o)[0:2],self.c.coords(o)[2:4]))
         results = SceneEval.sceneEval(searchMe,params)
         if len(results)>0:
             self.chainViz(results)
@@ -198,6 +198,7 @@ class PlaygroundWindow:
                     linePts = self.c.coords(c[o])[0:2]+self.c.coords(c[o+1])[0:2]
                     linePts = map(int,linePts)
                     linePts = map(lambda x: x+10,linePts)
+
                     self.c.create_line(linePts,fill=blue,tags="line",width=weight)  
             
             

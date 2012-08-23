@@ -21,9 +21,12 @@ def clustercost(data):
     #    data is a tuple of two dictionaries: core cluster data first, then larger and more permissive clusters\
     # this func needs to return a unified list of possible clusters using both dictionaries in the style of the chain finder function
     # quick and dirty:
+    
+    #need to change this to use IDs instead of coordinates.
 
     smallClusters = []
     bigClusters = []
+
 
     #cores
     for i in data[0].viewvalues():
@@ -39,17 +42,17 @@ def clustercost(data):
 
 
 
-def dbscan(data):
+def dbscan(data,distanceMatrix):
+#    print "starting dbscan"
+#    print "dbscan input:", data
     X,ids,bbmin,bbmax = zip(*data)
-    distance_array=cluster_util.create_distance_matrix(data)
-
-    
-    S = 1 - (distance_array / np.max(distance_array))
+    S = 1 - (distanceMatrix / np.max(distanceMatrix))
     db = DBSCAN(min_samples=4).fit(S)
     core_samples = db.core_sample_indices_
     labels = db.labels_
-    clusterlist = zip(labels, ids)
-    shortclusterlist = zip(labels,ids)
+    clusterlist = zip(labels, X)
+    shortclusterlist = zip(labels,X)
+
 
     fringedict = dict()
     coredict = dict()
@@ -65,6 +68,7 @@ def dbscan(data):
             fringedict[ikey]=[]
             coredict[ikey].append(ival)
             fringedict[ikey].append(ival)
+#        print clusterlist[i]
         shortclusterlist.remove(clusterlist[i])
 
     for i in shortclusterlist:
@@ -73,4 +77,6 @@ def dbscan(data):
         except:
             fringedict[int(i[0])]=[]
             fringedict[int(i[0])].append(i[1])
+            
+#    print "dbscan output", (coredict,fringedict)
     return (coredict,fringedict)
