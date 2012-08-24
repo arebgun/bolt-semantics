@@ -9,6 +9,7 @@ import numpy as np
 import heapq
 from cluster import dbscan,clustercost
 from copy import copy
+from time import time
 
 
 
@@ -35,13 +36,20 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
     evaluate the whole thing with bundle search
     '''
     reducedObjectSet = copy(inputObjectSet)
+    objectDict = dict()
+    for i in inputObjectSet:
+        objectDict[i.id]=i
     distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
-    clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix))
+    dbtimestart = time()
+    clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix,objectDict),objectDict)
+    dbtimestop = time()
+    print "dbscan time: \t\t\t", dbtimestop-dbtimestart
 #    print 'clustercandidates',clusterCandidates
     
     innerLines = []
     #search for lines inside large clusters
     if params.attempt_dnc==True:
+        insideLineStart= time()
         for cluster in clusterCandidates[1]:
 
             innerObjects = []
@@ -60,27 +68,46 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
                     if x.id == id:
                         reducedObjectSet.remove(x)
         ReducedDistanceMatrix = cluster_util.create_distance_matrix(reducedObjectSet)
-
+        insideLineStop = time()
+        print "inside linesearch time:\t\t",insideLineStop-insideLineStart
+        
+    outsideLineStart = time()
     lineCandidates = findChains(reducedObjectSet,params)
+    outsideLineStop = time()
+    
+    
 
+#    for i in scene:
+#        groups.append(cluster_util.SingletonBundle([i[0]],1))
+
+#need to implement singletons intelligently. 
+
+
+
+    print "general linesearch time:\t",outsideLineStop-outsideLineStart
     allCandidates = clusterCandidates[0]+clusterCandidates[1] + lineCandidates + innerLines
     groupDictionary = dict()
     for i in allCandidates:
         groupDictionary[i.uuid]=i
+    bundleStart = time()
     evali = bundleSearch(cluster_util.totuple(inputObjectSet), allCandidates, params.allow_intersection, params.beam_width)   
+    bundleStop = time()
+    print "bundlesearch time: \t\t",bundleStop-bundleStart
     #find the things in evali that aren't in the dictionary ,and make a singleton group out of them, and add it to the output
-#    print "evali", evali
-    
+
+    #what the heck am i doing here?
     physicalobjects = []
     for i in evali:
+        print i
         try:
-            physicalobjects.append(groupDictionary[i])
+            physicalobjects.append(groupDictionary.get(i))
         except:
             print "not in dictionary"
     output = map(lambda x: groupDictionary.get(x),evali)
-#    print "done makign groups"
-#    print physicalobjects
+    print output
+#    print 'costs', map(lambda x: x.cost,output)
     return output
+
     
 
 def findChains(inputObjectSet, params, distanceMatrix = -1 ):
@@ -88,7 +115,7 @@ def findChains(inputObjectSet, params, distanceMatrix = -1 ):
 
     if distanceMatrix == -1:
         distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
-  
+
     bestlines = []
     explored = set()
     pairwise = cluster_util.find_pairs(inputObjectSet)
@@ -132,7 +159,7 @@ def chainSearch(start, finish, points, params, distanceMatrix):
             path.insert(0, start.id)
             return path
         explored.add(node.state.id)
-        successors = node.getSuccessors(points,start,finish,params)
+        successors = node.getSuccessors(points,start,finish,params,distanceMatrix)
         for child in successors:
             if child.state.id not in explored and frontier.contains(child.state.id)==False:
                 frontier.push(child, child.cost)
@@ -177,7 +204,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     global allow_intersection 
     allow_intersection = intersection
     
-    print "number of groups:",len(groups)
+#    print "number of groups:",len(groups)
     expanded = 0
     singletonCost = 1
 
@@ -193,7 +220,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
         expanded += 1
         if node.getState() >= frozenset(map(lambda x:x[0],scene)):
             path = node.traceback()
-            print "scene evaluation expanded",expanded,"nodes with beam width of ",beamwidth
+#            print "scene evaluation expanded",expanded,"nodes with beam width of ",beamwidth
             break
         explored.add(node.state)
         successors = node.getSuccessors(scene,groups)
@@ -225,7 +252,9 @@ class Node:
     def getState(self):
         return self.state
     
-    def getSuccessors(self, points,start,finish,params):
+    def getSuccessors(self, points,start,finish,params,distanceMatrix):
+#        print points
+#        print len(points)
         
         out = []
         if self.parent == -1: 

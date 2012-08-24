@@ -3,7 +3,7 @@ from collections import namedtuple
 import numpy as np
 from uuid import uuid4
 import math
-from planar import BoundingBox,Vec2
+from planar import BoundingBox,Vec2,Polygon
 import landmark
 
 
@@ -56,7 +56,14 @@ def create_distance_matrix(data):
 def convex_hull(data):
     BoundingBoxes = convert_to_bboxes(data)
     points = map(lambda x: x.center,BoundingBoxes)
-    print points
+    return points
+    
+def area(p):
+    return 0.5 * abs(sum(x0*y1 - x1*y0
+                         for ((x0, y0), (x1, y1)) in segments(p)))
+
+def segments(p):
+    return zip(p, p[1:] + [p[0]])
     
         
 def convert_to_bboxes(data):

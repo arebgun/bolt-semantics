@@ -17,32 +17,55 @@ from planar import Vec2,BoundingBox
 import landmark
 
 
-def clustercost(data):
+def clustercost(data,objectDict,baseline = 0.001):
     #    data is a tuple of two dictionaries: core cluster data first, then larger and more permissive clusters\
     # this func needs to return a unified list of possible clusters using both dictionaries in the style of the chain finder function
     # quick and dirty:
     
-    #need to change this to use IDs instead of coordinates.
-
     smallClusters = []
     bigClusters = []
-
-
+    print data[0].values()[0]
+    print data[0].values()
+    
+    
+    
+    
     #cores
     for i in data[0].viewvalues():
-        corecluster=cluster_util.GroupBundle(i,len(i)*.8)
+        corePO = map(lambda x: objectDict.get(x),i)
+        coreHull = cluster_util.convex_hull(corePO)
+        try:
+            density = len(i)/cluster_util.area(coreHull)
+        except:
+            density = 0
+        if density>=1: print "groups are too dense, things may be weird."
+        cost = len(i)*(1-density) + baseline
+        
+        corecluster=cluster_util.GroupBundle(i,cost)
         smallClusters.append(corecluster)
+        
+    #fringes
     for i in data[1].viewvalues():
-        bigcluster = cluster_util.GroupBundle(i,len(i)*.8)
+        fringePO = map(lambda x: objectDict.get(x),i)
+        fringeHull = cluster_util.convex_hull(fringePO)
+        try:
+            density = len(i)/cluster_util.area(fringeHull)
+        except:
+            density = 0
+        if density>=1: print "groups are too dense, things may be weird."
+        cost = len(i)*(1-density) + baseline
+    
+        bigcluster = cluster_util.GroupBundle(i,cost)
         bigClusters.append(bigcluster)
-
+        print objectDict.values()
+        
     return (smallClusters,bigClusters)
 
     #cores+fringes
 
 
 
-def dbscan(data,distanceMatrix):
+def dbscan(data,distanceMatrix,objectDict):
 #    print "starting dbscan"
 #    print "dbscan input:", data
     X,ids,bbmin,bbmax = zip(*data)
@@ -78,5 +101,4 @@ def dbscan(data,distanceMatrix):
             fringedict[int(i[0])]=[]
             fringedict[int(i[0])].append(i[1])
             
-#    print "dbscan output", (coredict,fringedict)
     return (coredict,fringedict)
