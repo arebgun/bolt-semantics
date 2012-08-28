@@ -24,12 +24,16 @@ def clustercost(data,objectDict,baseline = 0.001):
     
     smallClusters = []
     bigClusters = []
+<<<<<<< HEAD
     print data[0].values()[0]
     print data[0].values()
     
     
     
     
+=======
+
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     #cores
     for i in data[0].viewvalues():
         corePO = map(lambda x: objectDict.get(x),i)
@@ -57,14 +61,19 @@ def clustercost(data,objectDict,baseline = 0.001):
     
         bigcluster = cluster_util.GroupBundle(i,cost)
         bigClusters.append(bigcluster)
+<<<<<<< HEAD
         print objectDict.values()
         
+=======
+
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     return (smallClusters,bigClusters)
 
     #cores+fringes
 
 
 
+<<<<<<< HEAD
 def dbscan(data,distanceMatrix,objectDict):
 #    print "starting dbscan"
 #    print "dbscan input:", data
@@ -76,6 +85,17 @@ def dbscan(data,distanceMatrix,objectDict):
     clusterlist = zip(labels, X)
     shortclusterlist = zip(labels,X)
 
+=======
+def dbscan(data):
+    X,ids = zip(*data)
+    D = distance.squareform(distance.pdist(X))
+    S = 1 - (D / np.max(D))
+    db = DBSCAN(min_samples=4).fit(S)
+    core_samples = db.core_sample_indices_
+    labels = db.labels_
+    clusterlist = zip(labels, ids)
+    shortclusterlist = zip(labels,ids)
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     fringedict = dict()
     coredict = dict()
@@ -100,5 +120,8 @@ def dbscan(data,distanceMatrix,objectDict):
         except:
             fringedict[int(i[0])]=[]
             fringedict[int(i[0])].append(i[1])
+<<<<<<< HEAD
             
+=======
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     return (coredict,fringedict)

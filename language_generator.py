@@ -1,7 +1,11 @@
 from relation import *
 from random import choice
 from landmark import Landmark, ObjectClass, Color
+<<<<<<< HEAD
 
+=======
+from itertools import product
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
 # point_words = ['bottle', 'cup', 'computer', 'laptop', 'keyboard', 'book', 'box', 'monitor',
 #                'disc', 'CD', 'camera', 'lens', 'motor', 'screwdriver', 'pen', 'pencil']
@@ -31,7 +35,11 @@ class_to_words = {
     Landmark.POINT:    {'N' : ['point']},
     FromRelation:      {'P' : ['from']},
     ToRelation:        {'P' : ['to']},
+<<<<<<< HEAD
     NextToRelation:    {'P' : ['next to', 'at', 'by']},
+=======
+    NextToRelation:    {'P' : ['at', 'by']},#['next to', 'at', 'by']},
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     OnRelation:        {'P' : ['on']},
     InFrontRelation:   {'P' : ['in front of'], 'A' : ['front', 'near']},
     BehindRelation:    {'P' : ['behind'], 'A' : ['back', 'far']},
@@ -43,6 +51,7 @@ class_to_words = {
     Measurement.NONE:  {'A' : ['']},
     Measurement.FAR:   {'A' : ['far']},
     Measurement.NEAR:  {'A' : ['near', 'close']},
+<<<<<<< HEAD
 }
 
 phrase_to_class = {
@@ -82,12 +91,57 @@ phrase_to_class = {
 
 }
 
+=======
+}
+
+phrase_to_class = {
+    'table':    ObjectClass.TABLE,
+    'table surface':    ObjectClass.TABLE,
+    'chair':    ObjectClass.CHAIR,
+    'cup':  ObjectClass.CUP,
+    'bottle':   ObjectClass.BOTTLE,
+    'edge': Landmark.EDGE,
+    'corner':   Landmark.CORNER,
+    'middle':   Landmark.MIDDLE,
+    'half': Landmark.HALF,
+    'end':  Landmark.END,
+    'side': Landmark.SIDE,
+    'line': Landmark.LINE,
+    'from': FromRelation,
+    'to':   ToRelation,
+    'next to':  NextToRelation,
+    'at':  NextToRelation,
+    'by':  NextToRelation,
+    'on':   OnRelation,
+    'in front of':  InFrontRelation,
+    'front':    InFrontRelation,
+    'near': InFrontRelation,
+    'behind':   BehindRelation,
+    'back': BehindRelation,
+    'far':  BehindRelation,
+    'to the left of':   LeftRelation,
+    'left': LeftRelation,
+    'to the right of':  RightRelation,
+    'right':    RightRelation,
+    'somewhat': Degree.SOMEWHAT,
+    'very': Degree.VERY,
+    'close':    Measurement.NEAR,
+    'of':   'OF',
+    'the':  'DT',
+
+}
+
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 def get_landmark_description(perspective, landmark, delimit_chunks=False):
     noun = choice(class_to_words[landmark.object_class]['N']) + (' * ' if delimit_chunks else ' ')
     desc = 'the' + (' * ' if delimit_chunks else ' ')
 
     for option in landmark.ori_relations:
+<<<<<<< HEAD
         desc += choice( class_to_words[type(option)]['A'] ) + (' * ' if delimit_chunks else ' ')
+=======
+        desc += choice( class_to_words[option]['A'] ) + (' * ' if delimit_chunks else ' ')
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     desc += (choice(class_to_words[landmark.color]['A']) + ' ' if landmark.color else '') + noun
 
@@ -116,6 +170,44 @@ def describe(perspective, trajector, landmark, relation, delimit_chunks=False):
            get_relation_description(relation, delimit_chunks) + \
            get_landmark_description(perspective, landmark, delimit_chunks)
 
+<<<<<<< HEAD
+=======
+
+def get_all_landmark_descriptions(perspective, trajector, landmark):
+    lists = [['the']]
+    lists.extend([class_to_words[option]['A'] for option in landmark.ori_relations])
+    lists.append(class_to_words[landmark.color]['A'] if landmark.color else [])
+    lists.append(class_to_words[landmark.object_class]['N'])
+    lists = filter(None,lists)
+
+    if landmark.parent and landmark.parent.parent_landmark:
+        lists.append( ['of'] )
+        lists.append( get_all_landmark_descriptions(perspective, trajector, landmark.parent.parent_landmark) )
+
+    return [' '.join(tup) for tup in product(*lists)]
+
+def get_all_relation_descriptions(relation):
+    lists = []
+
+    if hasattr(relation, 'measurement') and not isinstance(relation,VeryCloseDistanceRelation):
+        m = relation.measurement
+        lists.append(class_to_words[m.best_degree_class]['R'])
+        lists.append(class_to_words[m.best_distance_class]['A'])
+
+    lists.append(class_to_words[type(relation)]['P'])
+    lists = filter(None, lists)
+
+    return [' '.join(tup) for tup in product(*lists)]
+
+
+def get_all_descriptions(perspective, trajector, landmark, relation, the_point_is=False):
+    lmk_descs = get_all_landmark_descriptions(perspective, trajector, landmark)
+    rel_descs = get_all_relation_descriptions(relation)
+
+    return [' '.join(tup).strip() for tup in product(rel_descs, lmk_descs)]
+
+
+>>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 def phrases_to_meaning(phrases):
     m = []
 
