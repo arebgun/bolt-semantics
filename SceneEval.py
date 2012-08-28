@@ -11,7 +11,7 @@ from cluster import dbscan,clustercost
 from copy import copy
 from time import time
 
-
+#vacuous comment for git practice
 
 
 def main():
