@@ -41,6 +41,7 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
         objectDict[i.id]=i
     distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
     dbtimestart = time()
+    print dbscan(inputObjectSet,distanceMatrix,objectDict)
     clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix,objectDict),objectDict)
     dbtimestop = time()
     print "dbscan time: \t\t\t", dbtimestop-dbtimestart
@@ -97,8 +98,8 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
 
     #what the heck am i doing here?
     physicalobjects = []
+    print evali
     for i in evali:
-        print i
         try:
             physicalobjects.append(groupDictionary.get(i))
         except:
@@ -220,8 +221,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
         expanded += 1
         if node.getState() >= frozenset(map(lambda x:x[0],scene)):
             path = node.traceback()
-#            print "scene evaluation expanded",expanded,"nodes with beam width of ",beamwidth
-            break
+            return path
         explored.add(node.state)
         successors = node.getSuccessors(scene,groups)
         successors.sort(key= lambda s: s.gainratio,reverse=True)
@@ -232,8 +232,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
             elif frontier.contains(child.state) and frontier.pathCost(child.state) > child.cost:
                 
                 frontier.push(child,child.cost)
-#    print "path",path
-    return path
+
     
 class Node:
     def __init__(self, state, parent, action, cost,qCost):

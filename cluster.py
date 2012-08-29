@@ -24,8 +24,7 @@ def clustercost(data,objectDict,baseline = 0.001):
     
     smallClusters = []
     bigClusters = []
-    print data[0].values()[0]
-    print data[0].values()
+
     
     
     
