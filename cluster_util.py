@@ -15,12 +15,13 @@ def totuple(a):
         return a
     
 class PhysicalObject:
-    def __init__(self,id,position,bbmin,bbmax):  
+    def __init__(self,id,position,bbmin,bbmax,uuid=-1):  
         self.id = id
         self.position = position
         self.bbmin = bbmin
         self.bbmax = bbmax
-        self.uuid = uuid4()
+        if uuid == -1: self.uuid = uuid4()
+        else: self.uuid = uuid
         self.listOfFields = [self.id,self.position,self.bbmin,self.bbmax]
     def __iter__(self):
         for i in self.listOfFields:
