@@ -68,11 +68,11 @@ if __name__ == '__main__':
 
 
 
-    # groups = adapter.adapt(scene)
+    groups = adapter.adapt(scene)
 
-    # for i,g in enumerate(groups):
-    #     if (len(g) > 1):
-    #         scene.add_landmark(Landmark('ol%d'%i, ObjectLineRepresentation(g), None, Landmark.LINE))
+    for i,g in enumerate(groups):
+        if (len(g) > 1):
+            scene.add_landmark(Landmark('ol%d'%i, ObjectLineRepresentation(g), None, Landmark.LINE))
 
     # f = open('scene.pickle','wb')
     # pickle.dump(scene,f)

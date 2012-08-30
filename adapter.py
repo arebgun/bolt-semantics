@@ -1,11 +1,9 @@
 from planar import Vec2, BoundingBox
-from collections import namedtuple
 import numpy as np
+from cluster_util import PhysicalObject
 import SceneEval
 
 
-
-PhysicalObject = namedtuple('physicalObject', ['id', 'position', 'bbmin', 'bbmax'])
 objects = []
 def adapt(scene):
     '''takes a scene object and returns a list of lists of objects that form groups'''
@@ -16,4 +14,5 @@ def adapt(scene):
                         np.array(scene.landmarks[l].representation.rect.max_point))
         objects.append(o)
     results = SceneEval.sceneEval(objects)
+    print results
     return  results
