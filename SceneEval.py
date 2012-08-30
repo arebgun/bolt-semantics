@@ -91,7 +91,7 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
     for i in allCandidates:
         groupDictionary[i.uuid]=i
     bundleStart = time()
-    evali = bundleSearch(cluster_util.totuple(inputObjectSet), allCandidates, params.allow_intersection, params.beam_width)   
+    evali = bundleSearch(inputObjectSet, allCandidates, params.allow_intersection, params.beam_width)   
     bundleStop = time()
     print "bundlesearch time: \t\t",bundleStop-bundleStart
     #find the things in evali that aren't in the dictionary ,and make a singleton group out of them, and add it to the output
@@ -210,7 +210,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     singletonCost = 1
 
     for i in scene:
-        groups.append(cluster_util.SingletonBundle([i[0]],singletonCost))
+        groups.append(cluster_util.SingletonBundle([i.id],singletonCost))
         
     node = BNode(frozenset(), -1, [], 0)
     frontier = BundlePQ()
@@ -219,7 +219,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     while frontier.isEmpty() == False:
         node = frontier.pop()
         expanded += 1
-        if node.getState() >= frozenset(map(lambda x:x[0],scene)):
+        if node.getState() >= frozenset(map(lambda x:x.id,scene)):
             path = node.traceback()
             return path
         explored.add(node.state)
