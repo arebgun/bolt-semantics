@@ -341,11 +341,10 @@ class Speaker(object):
         if hasattr(relation, 'measurement'):
             print relation.measurement, relation.measurement.best_distance_class, relation.measurement.best_degree_class
 
-        plt.figure( figsize=(6,8) )
+        # plt.figure( figsize=(6,8) )
         #plt.subplot(1,2,1)
         scene_bb = scene.get_bounding_box()
         scene_bb = scene_bb.inflate( Vec2(scene_bb.width*0.5,scene_bb.height*0.5) )
-        plt.axis([scene_bb.min_point.x, scene_bb.max_point.x, scene_bb.min_point.y, scene_bb.max_point.y])
 
         probabilities, points = self.get_probabilities_box( scene_bb, relation, head_on, sampled_landmark, step )
         # xs, ys = points[:,0], points[:,1]
@@ -443,8 +442,10 @@ class Speaker(object):
 
         # toprint = str(poi)+' ; '+sampled_relation.get_description() + " " + sampled_landmark.get_description()
         # print toprint
+        plt.axis([scene_bb.min_point.x, scene_bb.max_point.x, scene_bb.min_point.y, scene_bb.max_point.y])
         title = "Probability of location given description:\n" + description
-        plt.suptitle('\n'.join(wrap(title,50)))
+        # plt.suptitle('\n'.join(wrap(title,50)))
+        plt.suptitle(title)
 
 
         # plt.subplot(2,2,2)
