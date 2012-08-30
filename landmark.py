@@ -111,28 +111,19 @@ def poly_to_poly_distance(poly1, poly2):
 
 
 class Color(object):
-    RED = 'RED'
-    GREEN = 'GREEN'
-    PURPLE = 'PURPLE'
-    BLUE = 'BLUE'
-    PINK = 'PINK'
-    ORANGE = 'ORANGE'
-    YELLOW = 'YELLOW'
     BLACK = 'BLACK'
+    BLUE = 'BLUE'
+    GREEN = 'GREEN'
+    ORANGE = 'ORANGE'
+    PINK = 'PINK'
+    PURPLE = 'PURPLE'
+    RED = 'RED'
+    TEAL = 'TEAL'
     WHITE = 'WHITE'
+    YELLOW = 'YELLOW'
 
-<<<<<<< HEAD
+    all = [BLACK, BLUE, GREEN, ORANGE, PINK, PURPLE, RED, TEAL, WHITE, YELLOW]
 
-class ObjectClass(object):
-    TABLE = 'TABLE'
-    CHAIR = 'CHAIR'
-    CUP = 'CUP'
-    BOTTLE = 'BOTTLE'
-    PRISM= 'PRISM'
-=======
-    all = [RED,GREEN,PURPLE,BLUE,PINK,ORANGE,YELLOW,BLACK,WHITE]
-
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
 class ObjectClass(object):
     TABLE = 'TABLE'
@@ -153,11 +144,8 @@ class Landmark(object):
     LINE = 'LINE'
     POINT = 'POINT'
 
-<<<<<<< HEAD
-=======
     all = [EDGE,CORNER,MIDDLE,HALF,END,SIDE,LINE,POINT]
 
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     def __init__(self, name, representation, parent, object_class=None, color=None):
         self.name = name
         self.representation = representation
@@ -179,13 +167,8 @@ class Landmark(object):
         return self.get_top_parent().get_primary_axes()
 
     def distance_to(self, rep):
-<<<<<<< HEAD
-        #tpd = self.get_top_parent().distance_to(point)
-        #if self.parent: point = self.parent.project_point(point)
-        return self.representation.distance_to(rep)# + tpd
-=======
         top_parent = self.get_top_parent()
-        min_dist = 0
+        min_dist = float('inf')
 
         for p in rep.get_points():
             tpd = top_parent.distance_to_point(p)
@@ -194,7 +177,6 @@ class Landmark(object):
             if d < min_dist: min_dist = d
 
         return min_dist
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def get_top_parent(self):
         top = self.parent
@@ -292,24 +274,18 @@ class PointRepresentation(AbstractRepresentation):
             return poly_to_vec_distance(geo, self.location)
         else:
             return geo.distance_to(self.location)
-<<<<<<< HEAD
-=======
 
     def distance_to_point(self, xy):
         return self.location.distance_to( xy )
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def contains(self, other):
         ''' If PointRepresentation return True if approx. equal.
             Return False if any other representation. '''
         if other.num_dim > self.num_dim: return False
         return self.location.almost_equals(other.location)
-<<<<<<< HEAD
-=======
 
     def contains_point(self, xy):
         return self.location.almost_equals(xy)
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def get_points(self):
         return [self.location]
@@ -353,12 +329,9 @@ class LineRepresentation(AbstractRepresentation):
             return poly_to_seg_distance(geo.to_polygon(), self.line)
         elif isinstance(geo,Polygon):
             return poly_to_seg_distance(geo, self.line)
-<<<<<<< HEAD
-=======
 
     def distance_to_point(self, xy):
         return self.line.distance_to( xy )
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
@@ -410,12 +383,9 @@ class CircleRepresentation(AbstractRepresentation):
             self.circ.distance_to(geo.center) - geo.radius
         return distance if distance > 0 else 0
 
-<<<<<<< HEAD
-=======
     def distance_to_point(self, xy):
         return self.circ.distance_to( xy )
 
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
@@ -429,12 +399,9 @@ class CircleRepresentation(AbstractRepresentation):
                 if not self.circ.contains_point(p): return False
             return True
 
-<<<<<<< HEAD
-=======
     def contains_point(self, xy):
         return self.circ.contains_point( xy )
 
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     def get_geometry(self):
         return self.circ
 
@@ -514,12 +481,9 @@ class RectangleRepresentation(AbstractRepresentation):
             return bb_to_bb_distance(self.rect, geo)
         elif isinstance(geo,Polygon):
             return poly_to_poly_distance(self.rect.to_polygon(), geo)
-<<<<<<< HEAD
-=======
 
     def distance_to_point(self, xy):
         return poly_to_vec_distance( self.rect.to_polygon(), xy )
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
@@ -531,12 +495,9 @@ class RectangleRepresentation(AbstractRepresentation):
             for p in other.get_points():
                 if not self.rect.contains_point(p): return False
             return True
-<<<<<<< HEAD
-=======
 
     def contains_point(self, xy):
         return self.rect.contains_point( xy )
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
 
     def get_geometry(self):
         return self.rect
@@ -575,12 +536,9 @@ class PolygonRepresentation(AbstractRepresentation):
         elif isinstance(geo, Polygon):
             return poly_to_poly_distance(self.poly, geo)
 
-<<<<<<< HEAD
-=======
     def distance_to_point(self, xy):
         return poly_to_vec_distance( self.poly, xy )
 
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
@@ -592,12 +550,9 @@ class PolygonRepresentation(AbstractRepresentation):
                 if not self.poly.contains_point(p): return False
             return True
 
-<<<<<<< HEAD
-=======
     def contains_point(self, xy):
         return self.poly.contains_point( xy )
 
->>>>>>> 056a0c551d985ed05018d0fc0987c34c485ddaef
     def get_geometry(self):
         return self.poly
 
