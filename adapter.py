@@ -18,10 +18,8 @@ def adapt(scene):
         objects.append(o)
     results = SceneEval.sceneEval(objects)
     for i in results:
-        listOfLandmarksInGroup = []
-        for member in i:
-            print member
-            listOfLandmarksInGroup.append(landmarkDict.get(member))
+        listOfLandmarksInGroup = [landmarkDict.get(member) for member in results]
+        print "not sure what the params to GroupRectangleRepresentation are supposed to be..."
         group = landmark.GroupRectangleRepresentation(listOfLandmarksInGroup)
     return  results
 
