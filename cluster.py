@@ -4,7 +4,7 @@ Created on Jul 5, 2012
 @author: colinwinslow
 '''
 
-#tiny change2 
+#tiny change2
  
 import numpy as np
 
