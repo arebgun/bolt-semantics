@@ -149,7 +149,6 @@ class PlaygroundWindow:
         f=open(filename,'w')
         dots = map(self.c.coords,self.c.find_all())
         output = (params,dots)
-        print output
         pickledCanvas = pickle.dump(output, f)
         f.close()
         

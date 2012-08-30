@@ -56,7 +56,6 @@ def clustercost(data,objectDict,baseline = 0.001):
     
         bigcluster = cluster_util.GroupBundle(i,cost)
         bigClusters.append(bigcluster)
-        print objectDict.values()
         
     return (smallClusters,bigClusters)
 

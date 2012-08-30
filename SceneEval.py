@@ -41,7 +41,6 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
         objectDict[i.id]=i
     distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
     dbtimestart = time()
-    print dbscan(inputObjectSet,distanceMatrix,objectDict)
     clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix,objectDict),objectDict)
     dbtimestop = time()
     print "dbscan time: \t\t\t", dbtimestop-dbtimestart
@@ -90,6 +89,8 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
     groupDictionary = dict()
     for i in allCandidates:
         groupDictionary[i.uuid]=i
+    for i in inputObjectSet:
+        groupDictionary[i.uuid]=cluster_util.SingletonBundle([i.id],1,i.uuid)
     bundleStart = time()
     evali = bundleSearch(inputObjectSet, allCandidates, params.allow_intersection, params.beam_width)   
     bundleStop = time()
@@ -98,14 +99,14 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
 
     #what the heck am i doing here?
     physicalobjects = []
-    print evali
+
     for i in evali:
         try:
             physicalobjects.append(groupDictionary.get(i))
         except:
             print "not in dictionary"
     output = map(lambda x: groupDictionary.get(x),evali)
-    print output
+
 #    print 'costs', map(lambda x: x.cost,output)
     return output
 
@@ -210,7 +211,7 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     singletonCost = 1
 
     for i in scene:
-        groups.append(cluster_util.SingletonBundle([i.id],singletonCost))
+        groups.append(cluster_util.SingletonBundle([i.id],singletonCost,i.uuid))
         
     node = BNode(frozenset(), -1, [], 0)
     frontier = BundlePQ()

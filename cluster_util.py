@@ -94,11 +94,13 @@ def find_pairs(l):
     return pairs
 
 class Bundle(object):
-    def __init__(self,members,cost):
+    def __init__(self,members,cost,uuid=-1):
         self.members = members
         self.cost = cost
         self.cardinality = len(members)
-        self.uuid = uuid4()
+        if uuid == -1:
+            self.uuid = uuid4()
+        else: self.uuid = uuid
     def __getitem__(self,item):
         return self.members[item]
     def __iter__(self):
@@ -113,9 +115,9 @@ class LineBundle(Bundle):
         super(LineBundle,self).__init__(members,cost)
         
 class SingletonBundle(Bundle):
-    def __init__(self,members,cost):
+    def __init__(self,members,cost,uuid):
         self.bundleType='singleton'
-        super(SingletonBundle,self).__init__(members,cost)
+        super(SingletonBundle,self).__init__(members,cost,uuid)
         
 class GroupBundle(Bundle):
     def __init__(self,members,cost):
