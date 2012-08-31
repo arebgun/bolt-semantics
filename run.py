@@ -13,7 +13,7 @@ from landmark import (GroupLineRepresentation,
                       Color)
 from random import random
 import pickle
-import adapter
+#import adapter
 
 def construct_training_scene():
     speaker = Speaker(Vec2(0,0))
