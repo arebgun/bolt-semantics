@@ -417,19 +417,21 @@ class Speaker(object):
         plt.plot(head_on.x,head_on.y,'ro',markeredgewidth=2)
         plt.text(head_on.x+0.02,head_on.y+0.01,'perspective')
 
+        lwidth = 3
+        lcolor = (0,1,0)
         if isinstance(sampled_landmark.representation, PointRepresentation):
             plt.plot(sampled_landmark.representation.location.x,
                      sampled_landmark.representation.location.y,
-                     'r.',markeredgewidth=2)
+                     '.',markeredgewidth=lwidth,color=lcolor)
         elif isinstance(sampled_landmark.representation, LineRepresentation):
             xs = [sampled_landmark.representation.line.start.x,sampled_landmark.representation.line.end.x]
             ys = [sampled_landmark.representation.line.start.y,sampled_landmark.representation.line.end.y]
-            plt.fill(xs,ys,facecolor='none',edgecolor='red',linewidth=2)
+            plt.fill(xs,ys,facecolor='none',edgecolor=lcolor,linewidth=lwidth)
         elif isinstance(sampled_landmark.representation, RectangleRepresentation):
             rect = sampled_landmark .representation.rect
             xs = [rect.min_point.x,rect.min_point.x,rect.max_point.x,rect.max_point.x]
             ys = [rect.min_point.y,rect.max_point.y,rect.max_point.y,rect.min_point.y]
-            plt.fill(xs,ys,facecolor='none',edgecolor='red',linewidth=2)
+            plt.fill(xs,ys,facecolor='none',edgecolor=lcolor,linewidth=lwidth)
 
 
         # rel_scores = []
