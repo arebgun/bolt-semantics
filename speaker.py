@@ -442,6 +442,8 @@ class Speaker(object):
 
         # toprint = str(poi)+' ; '+sampled_relation.get_description() + " " + sampled_landmark.get_description()
         # print toprint
+        plt.axis('scaled')
+
         plt.axis([scene_bb.min_point.x, scene_bb.max_point.x, scene_bb.min_point.y, scene_bb.max_point.y])
         title = "Probability of location given description:\n" + description
         # plt.suptitle('\n'.join(wrap(title,50)))

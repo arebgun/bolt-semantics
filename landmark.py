@@ -173,10 +173,22 @@ class Landmark(object):
         for p in rep.get_points():
             tpd = top_parent.distance_to_point(p)
             if self.parent: p = self.parent.project_point(p)
-            d = self.representation.distance_to_point(p) + tpd
+            d = self.representation.distance_to_point(p)
+            d = np.sqrt( d*d + tpd*tpd )
             if d < min_dist: min_dist = d
 
         return min_dist
+
+    def distance_to_point(self, p):
+        top_parent = self.get_top_parent()
+        # print p
+        tpd = top_parent.distance_to_point(p)
+        if self.parent: p = self.parent.project_point(p)
+        d = self.representation.distance_to_point(p)
+        # print self, self.parent, top_parent, p, tpd, d
+        d = np.sqrt( d*d + tpd*tpd )
+
+        return d
 
     def get_top_parent(self):
         top = self.parent
@@ -317,7 +329,7 @@ class LineRepresentation(AbstractRepresentation):
         }
 
     def my_project_point(self, point):
-        return self.line.line.project(point)
+        return self.line.project(point)
 
     def distance_to(self, rep):
         geo = rep.get_geometry()
@@ -469,7 +481,18 @@ class RectangleRepresentation(AbstractRepresentation):
                 self.landmarks[lmk_name] = eval(landmark_constructors[lmk_name])
 
     def my_project_point(self, point):
-        return point
+        if self.contains_point( point ):
+            return point
+        else:
+            edges = poly_to_edges(self.rect.to_polygon())
+            min_dist = float('inf')
+            for edge in edges:
+                dist = edge.distance_to(point)
+                if dist < min_dist:
+                    min_dist = dist
+                    closest = edge
+            return closest.project(point)
+
 
     def distance_to(self, rep):
         geo = rep.get_geometry()
@@ -587,7 +610,7 @@ class GroupLineRepresentation(LineRepresentation):
 
 class GroupRectangleRepresentation(RectangleRepresentation):
     def __init__(self, lmk_group, alt_of=None):
-        shapes = [lmk.get_geometry() for lmk in lmk_group]
+        shapes = [lmk.representation.get_geometry() for lmk in lmk_group]
         super(GroupRectangleRepresentation, self).__init__(rect=BoundingBox.from_shapes(shapes),
                                                            landmarks_to_get=['middle'],
                                                            alt_of=alt_of)

@@ -136,14 +136,14 @@ class DistanceRelation(Relation):
     def are_applicable(self, point_array):
         distances = zeros( point_array.shape[0] )
         for i,point in enumerate(point_array):
-            distances[i] = self.landmark.representation.distance_to_point(point)
+            distances[i] = self.landmark.distance_to_point(point)
         return self.measurement.are_applicable(distances)
 
     @classmethod
     def any_are_applicable(cls, perspective, landmark, point_array):
         distances = zeros( point_array.shape[0] )
         for i,point in enumerate(point_array):
-            distances[i] = landmark.representation.distance_to_point(point)
+            distances[i] = landmark.distance_to_point(point)
         return Measurement.any_are_applicable(distances, required=True)
 
 
@@ -198,7 +198,11 @@ class OrientationRelation(Relation):
         self.ori_ray = OrientationRelation.get_orientation_ray(perspective, landmark)
 
         # TODO make sure this works using .middle
-        self.projected = self.ori_ray.line.project(trajector.representation.middle)
+        if landmark.parent is not None:
+            self.projected = landmark.parent.project_point(trajector.representation.middle)
+        else:
+            self.projected = trajector.representation.middle
+        self.projected = self.ori_ray.line.project(self.projected)
 
         self.distance = self.ori_ray.start.distance_to(self.projected)
         self.measurement = Measurement(self.distance, required=False, distance_class=Measurement.FAR)
