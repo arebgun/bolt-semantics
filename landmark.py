@@ -429,7 +429,6 @@ class RectangleRepresentation(AbstractRepresentation):
         self.rect = rect
         self.num_dim = 2
         self.middle = rect.center
-        self.ratio_limit = 2.0
         vert_ratio = self.rect.height / self.rect.width
         horiz_ratio = self.rect.width / self.rect.height
         self.alt_representations = [LineRepresentation( horiz_ratio,
@@ -621,6 +620,7 @@ class GroupRectangleRepresentation(RectangleRepresentation):
         super(GroupRectangleRepresentation, self).__init__(rect=BoundingBox.from_shapes(shapes),
                                                            landmarks_to_get=['middle'],
                                                            alt_of=alt_of)
+        self.alt_representations = []
         self.landmark_group = lmk_group
 
 

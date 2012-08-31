@@ -125,18 +125,14 @@ class PlaygroundWindow:
         self.c.delete("line")
         searchMe = []
         for o in self.c.find_all():
-            searchMe.append(PhysicalObject(o,np.array(self.c.coords(o)[0:2]),np.array(self.c.coords(o)[0:2]),np.array(self.c.coords(o)[2:4])))
+            searchMe.append(PhysicalObject(o,self.c.coords(o)[0:2],self.c.coords(o)[0:2],self.c.coords(o)[2:4]))
         results = SceneEval.sceneEval(searchMe,params)
         if len(results)>0:
             self.chainViz(results)
             
         
             
-    def chainViz(self,chains):
 
-        self.c.delete("line")
-        color = "green"
-        weight = 4
 
         
     def saveScene(self):
@@ -153,7 +149,6 @@ class PlaygroundWindow:
         f=open(filename,'w')
         dots = map(self.c.coords,self.c.find_all())
         output = (params,dots)
-        print output
         pickledCanvas = pickle.dump(output, f)
         f.close()
         
@@ -184,6 +179,8 @@ class PlaygroundWindow:
         blue = "#0000FF"
         color = color1
         weight = 4
+        colorList = ['blue','pink','orange','yellow']
+        cycle = 0
         for c in chains:
             if type(c)==cluster_util.LineBundle:
                 for o in range(len(c)-1):
@@ -194,11 +191,14 @@ class PlaygroundWindow:
                     linePts = map(lambda x: x+10,linePts)
                     self.c.create_line(linePts,fill=color,tags="line",width=weight)
             elif type(c)==cluster_util.GroupBundle:
-                for o in range(len(c)-1):
-                    linePts = self.c.coords(c[o])[0:2]+self.c.coords(c[o+1])[0:2]
+                if cycle == 4: cylce = 0
+                for o in range(len(c)):
+                    linePts = self.c.coords(c[o])[0:2]
                     linePts = map(int,linePts)
                     linePts = map(lambda x: x+10,linePts)
-                    self.c.create_line(linePts,fill=blue,tags="line",width=weight)  
+                    self.c.create_oval(linePts[0]-5,linePts[1]-5,linePts[0]+5,linePts[1]+5,fill=colorList[cycle],tags='line')
+#                    self.c.create_line(linePts,fill=blue,tags="line",width=weight)  
+                cycle += 1
             
             
 #    def chainViz(self,chains):

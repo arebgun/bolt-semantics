@@ -9,8 +9,9 @@ import numpy as np
 import heapq
 from cluster import dbscan,clustercost
 from copy import copy
+from time import time
 
-
+#vacuous comment for git practice
 
 
 def main():
@@ -35,12 +36,20 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
     evaluate the whole thing with bundle search
     '''
     reducedObjectSet = copy(inputObjectSet)
-    
-    clusterCandidates = clustercost(dbscan(np.array(map(lambda x: (x.position,x.id),inputObjectSet))))
+    objectDict = dict()
+    for i in inputObjectSet:
+        objectDict[i.id]=i
+    distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
+    dbtimestart = time()
+    clusterCandidates = clustercost(dbscan(inputObjectSet,distanceMatrix,objectDict),objectDict)
+    dbtimestop = time()
+    print "dbscan time: \t\t\t", dbtimestop-dbtimestart
+#    print 'clustercandidates',clusterCandidates
     
     innerLines = []
     #search for lines inside large clusters
     if params.attempt_dnc==True:
+        insideLineStart= time()
         for cluster in clusterCandidates[1]:
 
             innerObjects = []
@@ -58,22 +67,57 @@ def sceneEval(inputObjectSet,params = ClusterParams(2,0.9,3,0.05,0.1,1,0,11,Fals
                 for x in reducedObjectSet:
                     if x.id == id:
                         reducedObjectSet.remove(x)
-
+        ReducedDistanceMatrix = cluster_util.create_distance_matrix(reducedObjectSet)
+        insideLineStop = time()
+        print "inside linesearch time:\t\t",insideLineStop-insideLineStart
+        
+    outsideLineStart = time()
     lineCandidates = findChains(reducedObjectSet,params)
+    outsideLineStop = time()
     
+    
+
+#    for i in scene:
+#        groups.append(cluster_util.SingletonBundle([i[0]],1))
+
+#need to implement singletons intelligently. 
+
+
+
+    print "general linesearch time:\t",outsideLineStop-outsideLineStart
     allCandidates = clusterCandidates[0]+clusterCandidates[1] + lineCandidates + innerLines
     groupDictionary = dict()
     for i in allCandidates:
         groupDictionary[i.uuid]=i
-    evali = bundleSearch(cluster_util.totuple(inputObjectSet), allCandidates, params.allow_intersection, params.beam_width)   
+    for i in inputObjectSet:
+        groupDictionary[i.uuid]=cluster_util.SingletonBundle([i.id],1,i.uuid)
+    bundleStart = time()
+    evali = bundleSearch(inputObjectSet, allCandidates, params.allow_intersection, params.beam_width)   
+    bundleStop = time()
+    print "bundlesearch time: \t\t",bundleStop-bundleStart
     #find the things in evali that aren't in the dictionary ,and make a singleton group out of them, and add it to the output
+
+    #what the heck am i doing here?
+    physicalobjects = []
+
+    for i in evali:
+        try:
+            physicalobjects.append(groupDictionary.get(i))
+        except:
+            print "not in dictionary"
     output = map(lambda x: groupDictionary.get(x),evali)
+
+#    print 'costs', map(lambda x: x.cost,output)
     return output
+
     
 
-def findChains(inputObjectSet, params ):
+def findChains(inputObjectSet, params, distanceMatrix = -1 ):
     '''finds all the chains, then returns the ones that satisfy constraints, sorted from best to worst.'''
-  
+
+    if distanceMatrix == -1:
+        distanceMatrix = cluster_util.create_distance_matrix(inputObjectSet)
+
     bestlines = []
     explored = set()
     pairwise = cluster_util.find_pairs(inputObjectSet)
@@ -81,7 +125,7 @@ def findChains(inputObjectSet, params ):
     for pair in pairwise:
         start,finish = pair[0],pair[1]
         if frozenset([start.id,finish.id]) not in explored:
-            result = chainSearch(start, finish, inputObjectSet,params)
+            result = chainSearch(start, finish, inputObjectSet,params,distanceMatrix)
             if result != None: 
                 bestlines.append(result)
                 s = map(frozenset,cluster_util.find_pairs(result[0:len(result)-1]))
@@ -103,7 +147,9 @@ def findChains(inputObjectSet, params ):
     return output
     
             
-def chainSearch(start, finish, points,params):
+def chainSearch(start, finish, points, params, distanceMatrix):
+    # Passing distancematrix in here to let us reuse it over and over for
+    # calculating successor costs. Need to actually implement that, though. 
     node = Node(start, -1, [], 0,0)
     frontier = PriorityQueue()
     frontier.push(node, 0)
@@ -115,7 +161,7 @@ def chainSearch(start, finish, points,params):
             path.insert(0, start.id)
             return path
         explored.add(node.state.id)
-        successors = node.getSuccessors(points,start,finish,params)
+        successors = node.getSuccessors(points,start,finish,params,distanceMatrix)
         for child in successors:
             if child.state.id not in explored and frontier.contains(child.state.id)==False:
                 frontier.push(child, child.cost)
@@ -126,16 +172,16 @@ def chainSearch(start, finish, points,params):
 
 def oldAngleCost(a, b, c):
     '''angle cost of going to c given we came from ab'''
-    abDir = b - a
-    bcDir = c - b
+    abDir = np.array(b) - np.array(a)
+    bcDir = np.array(c) - np.array(b)
     difference = cluster_util.findAngle(abDir, bcDir)
     if np.isnan(difference): return 0
     else: return np.abs(difference)
     
 def angleCost(a, b, c, d):
     '''prefers straighter lines'''
-    abDir = b - a
-    cdDir = d - c
+    abDir = np.array(b) - np.array(a)
+    cdDir = np.array(d) - np.array(c)
     difference = cluster_util.findAngle(abDir, cdDir)
     if np.isnan(difference): return 0
     else: return np.abs(difference)
@@ -160,12 +206,12 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     global allow_intersection 
     allow_intersection = intersection
     
-    print "number of groups:",len(groups)
+#    print "number of groups:",len(groups)
     expanded = 0
     singletonCost = 1
 
     for i in scene:
-        groups.append(cluster_util.SingletonBundle([i[0]],singletonCost))
+        groups.append(cluster_util.SingletonBundle([i.id],singletonCost,i.uuid))
         
     node = BNode(frozenset(), -1, [], 0)
     frontier = BundlePQ()
@@ -174,10 +220,9 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
     while frontier.isEmpty() == False:
         node = frontier.pop()
         expanded += 1
-        if node.getState() >= frozenset(map(lambda x:x[0],scene)):
+        if node.getState() >= frozenset(map(lambda x:x.id,scene)):
             path = node.traceback()
-            print "scene evaluation expanded",expanded,"nodes with beam width of ",beamwidth
-            break
+            return path
         explored.add(node.state)
         successors = node.getSuccessors(scene,groups)
         successors.sort(key= lambda s: s.gainratio,reverse=True)
@@ -187,8 +232,8 @@ def bundleSearch(scene, groups, intersection = 0,beamwidth=10):
                 frontier.push(child, child.cost)
             elif frontier.contains(child.state) and frontier.pathCost(child.state) > child.cost:
                 
-                frontier.push(child,child.cost)        
-    return path
+                frontier.push(child,child.cost)
+
     
 class Node:
     def __init__(self, state, parent, action, cost,qCost):
@@ -207,7 +252,9 @@ class Node:
     def getState(self):
         return self.state
     
-    def getSuccessors(self, points,start,finish,params):
+    def getSuccessors(self, points,start,finish,params,distanceMatrix):
+#        print points
+#        print len(points)
         
         out = []
         if self.parent == -1: 
@@ -249,7 +296,6 @@ class Node:
         cost = self.qCost#/cardinality
         solution.reverse()
         solution.append(cost)
-
         return solution
 
 class BNode:
@@ -276,9 +322,10 @@ class BNode:
         successors = []
 
         for g in groups:
+            memtup = cluster_util.totuple(g.members)
 
-            if len(self.state.intersection(g.members))<=allow_intersection:
-                asd=BNode(self.state.union(g.members),self,cluster_util.successorTuple(g.cost,g.members,g.uuid),g.cost)
+            if len(self.state.intersection(memtup))<=allow_intersection:
+                asd=BNode(self.state.union(memtup),self,g.uuid,g.cost)
                 if asd.gain > 0:
                     successors.append(asd)
         return successors
@@ -288,14 +335,12 @@ class BNode:
         solution = []
         node = self
         while node.parent != -1:
-#            solution.append(node.action[1])
-            solution.append(node.action.uuid)
-
+            solution.append(node.action)
             node = node.parent
         cardinality = len(solution)-1 #exclude the first node, which has cost 0
-        cost = self.cost#/cardinality
+        cost = self.cost
         solution.reverse()
-        #solution.append(cost)
+
 
         return solution
     
