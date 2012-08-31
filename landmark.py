@@ -181,7 +181,6 @@ class Landmark(object):
 
     def distance_to_point(self, p):
         top_parent = self.get_top_parent()
-        # print p
         tpd = top_parent.distance_to_point(p)
         if self.parent: p = self.parent.project_point(p)
         d = self.representation.distance_to_point(p)
@@ -324,13 +323,13 @@ class LineRepresentation(AbstractRepresentation):
         if ratio is None or ratio >= self.ratio_limit:
             self.landmarks = {
                 'start':  Landmark('start',  PointRepresentation(self.line.start), self, Landmark.END),
-                'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.MIDDLE),
-                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.END),
+                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.MIDDLE),
+                'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.END),
             }
         else:
             self.landmarks = {
                 'start':  Landmark('start',  PointRepresentation(self.line.start), self, Landmark.SIDE),
-                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.SIDE),
+                'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.SIDE)
             }
 
     def my_project_point(self, point):
