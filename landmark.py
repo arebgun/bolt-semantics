@@ -587,10 +587,11 @@ class GroupLineRepresentation(LineRepresentation):
 
 class GroupRectangleRepresentation(RectangleRepresentation):
     def __init__(self, lmk_group, alt_of=None):
-        shapes = [lmk.get_geometry() for lmk in lmk_group] # what is lmk_group supposed to be?
+        shapes = [lmk.representation.get_geometry() for lmk in lmk_group] # what is lmk_group supposed to be?
         super(GroupRectangleRepresentation, self).__init__(rect=BoundingBox.from_shapes(shapes),
                                                            landmarks_to_get=['middle'],
                                                            alt_of=alt_of)
+        self.alt_representations = []
         self.landmark_group = lmk_group
 
 

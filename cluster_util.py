@@ -115,7 +115,7 @@ class LineBundle(Bundle):
         self.bundleType='line'
         super(LineBundle,self).__init__(members,cost)
     def convert(self,landmarkDict):
-        listOfLandmarksInGroup = [landmarkDict.get(member).representation for member in self.members]
+        listOfLandmarksInGroup = [landmarkDict.get(member) for member in self.members]
         return landmark.GroupLineRepresentation(listOfLandmarksInGroup)
         
 class SingletonBundle(Bundle):
@@ -123,14 +123,14 @@ class SingletonBundle(Bundle):
         self.bundleType='singleton'
         super(SingletonBundle,self).__init__(members,cost,uuid)
     def convert(self,landmarkDict):
-        return landmarkDict.get(self.uuid).representation 
+        return landmarkDict.get(self.uuid)
         
 class GroupBundle(Bundle):
     def __init__(self,members,cost):
         self.bundleType='group'
         super(GroupBundle,self).__init__(members,cost)
     def convert(self,landmarkDict):
-        listOfLandmarksInGroup = [landmarkDict.get(member).representation for member in self.members]
+        listOfLandmarksInGroup = [landmarkDict.get(member) for member in self.members]
         return landmark.GroupRectangleRepresentation(listOfLandmarksInGroup)
         
 

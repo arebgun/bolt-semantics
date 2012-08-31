@@ -6,22 +6,24 @@ import landmark
 
 
 objects = []
-def adapt(scene):
+def adapt(landmarks):
     '''takes a scene object and returns a list of lists of objects that form groups'''
     landmarkDict = dict()
-    for l in scene.landmarks:
-        landmarkDict[scene.landmarks[l].uuid]=scene.landmarks[l]
-        o =PhysicalObject(scene.landmarks[l].uuid,
-                       np.array(scene.landmarks[l].representation.middle),
-                        np.array(scene.landmarks[l].representation.rect.min_point),
-                        np.array(scene.landmarks[l].representation.rect.max_point),scene.landmarks[l].uuid)
+
+    for l in landmarks:
+        landmarkDict[l.uuid]=l
+        o = PhysicalObject(l.uuid,
+                           np.array(l.representation.middle),
+                           np.array(l.representation.rect.min_point),
+                           np.array(l.representation.rect.max_point),
+                           l.uuid)
         objects.append(o)
+        
     bundles = SceneEval.sceneEval(objects)
-    
 
     for i in bundles:
        print i.convert(landmarkDict)
-       
+
     results = [bundle.convert(landmarkDict) for bundle in bundles]
     return  results
 

@@ -63,31 +63,19 @@ def construct_training_scene():
     return scene, speaker
 
 if __name__ == '__main__':
-
     scene, speaker = construct_training_scene()
-
-
-
-    groups = adapter.adapt(scene)
-
-    for i,g in enumerate(groups):
-        if (len(g) > 1):
-            scene.add_landmark(Landmark('ol%d'%i, ObjectLineRepresentation(g), None, Landmark.LINE))
-
-    # f = open('scene.pickle','wb')
-    # pickle.dump(scene,f)
-    # f.flush()
-    # f.close()
-    # del scene
-    # f = open('scene.pickle','rb')
-    # scene = pickle.load(f)
-
+    
+#    lmks = [lmk for lmk in scene.landmarks.values() if not lmk.name == 'table']
+#    groups = adapter.adapt(lmks)
+#    
+#    for i,g in enumerate(groups):
+#        scene.add_landmark(Landmark('ol%d'%i, g, None, Landmark.LINE))
+        
     #perspectives = [ Vec2(5.5,4.5), Vec2(6.5,6.0)]
     #speaker.talk_to_baby(scene, perspectives, how_many_each=10)
 
-
-    dozen = 10
-    couple = 2
+    dozen = 1
+    couple = 1
     for i in range(couple * dozen):
         location = Landmark( 'point', PointRepresentation(Vec2(random()*0.8-0.4,random()*0.6+0.4)), None, Landmark.POINT)
         trajector = location#obj2

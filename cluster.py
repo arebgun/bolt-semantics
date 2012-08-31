@@ -30,7 +30,7 @@ def clustercost(data,objectDict,baseline = 0.001):
     
     
     #cores
-    for i in data[0].viewvalues():
+    for i in data[0].values():
         corePO = map(lambda x: objectDict.get(x),i)
         coreHull = cluster_util.convex_hull(corePO)
         try:
@@ -44,7 +44,7 @@ def clustercost(data,objectDict,baseline = 0.001):
         smallClusters.append(corecluster)
         
     #fringes
-    for i in data[1].viewvalues():
+    for i in data[1].values():
         fringePO = map(lambda x: objectDict.get(x),i)
         fringeHull = cluster_util.convex_hull(fringePO)
         try:
