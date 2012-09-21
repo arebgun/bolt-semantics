@@ -1,19 +1,21 @@
 #!/usr/bin/env python
-from speaker import Speaker
-from planar import Vec2, BoundingBox
-from landmark import (GroupLineRepresentation,
-                      PointRepresentation,
-                      RectangleRepresentation,
-                      Circle,
-                      CircleRepresentation,
-                      SurfaceRepresentation,
-                      Scene,
-                      Landmark,
-                      ObjectClass,
-                      Color)
 from random import random
-import pickle
-#import adapter
+from planar import Vec2, BoundingBox
+from speaker import Speaker
+from scene import Scene
+
+from landmark import (
+    Landmark,
+    ObjectClass,
+    Color
+)
+
+from representation import (
+    PointRepresentation,
+    RectangleRepresentation,
+)
+
+#from configurations import adapter
 
 def construct_training_scene():
     speaker = Speaker(Vec2(0,0))

@@ -2,14 +2,15 @@ import sys
 sys.path.append("..")
 from myrandom import random
 choice = random.choice
-# from random import choice
+
 from myrandom import nprandom as random
 from numpy import array, zeros, maximum
 from scipy.stats import norm
 from planar import Vec2, Affine
 from planar.line import LineSegment, Ray
-from landmark import PointRepresentation
+from representation import PointRepresentation
 from itertools import product
+
 
 class Relation(object):
     def __init__(self, perspective, landmark, trajector):

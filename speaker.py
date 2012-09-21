@@ -20,13 +20,13 @@ from itertools import product
 from planar import Vec2
 
 import language_generator
+from landmark import Landmark
 
-from landmark import (
+from representation import (
     PointRepresentation,
     LineRepresentation,
     GroupLineRepresentation,
     RectangleRepresentation,
-    Landmark,
 )
 
 from relation import (
