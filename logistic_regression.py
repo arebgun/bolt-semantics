@@ -56,12 +56,15 @@ def train_w(X, Y, instance_weights, C=0.1):
     def fprime(w):
         return -log_likelihood_grad(X, Y, instance_weights, w, C)
 
+    X = np.array([np.ones(len(X)),X]).T
+
     K = X.shape[1]
     initial_guess = np.zeros(K)
 
     return scipy.optimize.fmin_bfgs(f, initial_guess, fprime, disp=False)
 
 def accuracy(X, Y, instance_weights, w):
+    X = np.array([ones(len(X)),X]).T
     unweighted = sum((predict(w,X) == Y) ) / len(X)
     weighted = sum((predict(w,X) == Y)*instance_weights ) / sum(instance_weights)
     return unweighted, weighted
