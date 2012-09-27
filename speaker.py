@@ -541,6 +541,12 @@ class Speaker(object):
         probabilities = probabilities/sum(probabilities.flatten())
         return -sum( (probabilities * log(probabilities)).flatten() )
 
+    def accept_correction(self, lmk, rel, update):
+        # TODO: update landmark?
+        # update relation
+        rel.update(update)
+
+
     def visualize(self, scene, trajector, head_on, sampled_landmark, sampled_relation, description, step=0.02):
 
         relation = sampled_relation

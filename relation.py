@@ -12,12 +12,17 @@ from representation import PointRepresentation
 from itertools import product
 from logistic_regression import train_w, accuracy, logistic
 from matplotlib import pyplot as plt
+import warnings
+warnings.simplefilter('always')
 
 class Relation(object):
     def __init__(self, perspective, landmark, trajector):
         self.perspective = perspective
         self.landmark = landmark
         self.trajector = trajector
+
+    def update(self, update):
+        warnings.warn("Update not implemented here")
 
 
 class RelationSet(object):
@@ -109,6 +114,9 @@ class Measurement(object):
         index = ps.cumsum().searchsorted( random.sample(1) )[0]
         return probs[index]
 
+    def update_this(self, distance, update):
+        Measurement.update(distance, update, self.best_distance_class, self.best_degree_class)
+
     def __repr__(self):
         return 'Measurement< req: %i, bdegree: %s, bdistance: %s >' % (self.required, self.best_degree_class, self.best_distance_class)
 
@@ -121,12 +129,13 @@ class Measurement(object):
         sd = array([sampled_distances]).T
         weights = ones(sampled_distances.shape)
         insts_and_trained_classifiers = {}
+        print
         for distc,degc in product(Measurement.distance_classes.keys(), Measurement.degree_classes.keys()):
             ps = Measurement.get_initial_applicability(sampled_distances, distc, degc)
             rs = random.random(ps.shape)
             labels = (rs < ps)*2 - 1
 
-            print sd.shape, labels.shape, weights.shape
+            print distc,degc,sd.shape, labels.shape, weights.shape
             w = train_w(sd, labels, weights)
 
             # print degc,distc
@@ -198,8 +207,8 @@ class Measurement(object):
             distances = array([distances]).T
             labels = array(labels)
             weights = array(weights)
-            print distances.shape, labels.shape, weights.shape
             record['w'] = train_w(distances, labels, weights )
+            print distance_class, degree_class, 'num points:', len(distances), 'w:',record['w']
 
 class DistanceRelation(Relation):
     def __init__(self, perspective, landmark, trajector):
@@ -218,6 +227,10 @@ class DistanceRelation(Relation):
         for i,point in enumerate(point_array):
             distances[i] = self.landmark.distance_to_point(point)
         return self.measurement.are_applicable(distances)
+
+    def update(self, update):
+        # TODO: update anything else?
+        self.measurement.update_this(self.distance, update)
 
     def __hash__(self):
         return hash(self.__class__.__name__ + ' ' + self.measurement.__hash__())
