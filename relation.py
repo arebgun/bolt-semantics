@@ -125,7 +125,7 @@ class Measurement(object):
 
     @staticmethod
     def seed_init():
-        sampled_distances = arange(0,2,0.001)
+        sampled_distances = arange(0,2,0.02)
         sd = array([sampled_distances]).T
         weights = ones(sampled_distances.shape)
         insts_and_trained_classifiers = {}
@@ -208,6 +208,7 @@ class Measurement(object):
             labels = array(labels)
             weights = array(weights)
             record['w'] = train_w(distances, labels, weights )
+            # print record['instances']
             print distance_class, degree_class, 'num points:', len(distances), 'w:',record['w']
 
 class DistanceRelation(Relation):
