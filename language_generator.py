@@ -113,11 +113,11 @@ def get_relation_description(relation, delimit_chunks=False):
     return desc + choice(class_to_words[type(relation)]['P']) + (' * ' if delimit_chunks else ' ')
 
 def describe(perspective, trajector, landmark, relation, delimit_chunks=False):
-    return 'The ' + \
-           (choice(class_to_words[trajector.color]['A']) + ' ' if trajector.color else '') + \
-           choice(class_to_words[trajector.object_class]['N']) + ' is' + \
-           (' * ' if delimit_chunks else ' ') + \
-           get_relation_description(relation, delimit_chunks) + \
+    # return 'The ' + \
+    #        (choice(class_to_words[trajector.color]['A']) + ' ' if trajector.color else '') + \
+    #        choice(class_to_words[trajector.object_class]['N']) + ' is' + \
+    #        (' * ' if delimit_chunks else ' ') + \
+    return get_relation_description(relation, delimit_chunks) + \
            get_landmark_description(perspective, landmark, delimit_chunks)
 
 
