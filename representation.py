@@ -1,3 +1,4 @@
+import json
 from planar import Vec2
 from planar import BoundingBox
 from planar import Polygon
@@ -15,6 +16,19 @@ from geometry import (
     poly_to_seg_distance,
     bb_to_bb_distance,
     poly_to_poly_distance
+)
+
+from serialize import (
+    vec2_to_dict,
+    vec2_from_dict,
+    linesegment_to_dict,
+    linesegment_from_dict,
+    circle_to_dict,
+    circle_from_dict,
+    bbox_to_dict,
+    bbox_from_dict,
+    poly_to_dict,
+    poly_from_dict
 )
 
 class AbstractRepresentation(object):
@@ -77,6 +91,22 @@ class PointRepresentation(AbstractRepresentation):
         self.num_dim = 0
         self.middle = point
 
+    @classmethod
+    def from_dict(cls, dikt):
+        point = vec2_from_dict(dikt['point'])
+        alt_of = AbstractRepresentation.from_dict(dikt['alt_of']) if dikt['alt_of'] else None
+        return PointRepresentation(point, alt_of)
+
+    def to_dict(self):
+        return {
+            'class': self.__class__.__name__,
+            'point': vec2_to_dict(self.location),
+            'alt_of': self.alt_of.to_dict() if self.alt_of else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
     def my_project_point(self, point):
         return Vec2(self.location.x, self.location.y)
 
@@ -114,6 +144,7 @@ class PointRepresentation(AbstractRepresentation):
 class LineRepresentation(AbstractRepresentation):
     def __init__(self, ratio=None, line=LineSegment.from_points([Vec2(0, 0), Vec2(1, 0)]), alt_of=None):
         super(LineRepresentation, self).__init__(alt_of)
+        self.ratio = ratio
         self.line = line
         # extend the LineSegment to include a bounding_box field, planar doesn't have that originally
         self.line.bounding_box = BoundingBox.from_points(self.line.points)
@@ -121,7 +152,6 @@ class LineRepresentation(AbstractRepresentation):
         self.middle = line.mid
         self.alt_representations = [PointRepresentation(self.line.mid, self)]
         self.ratio_limit = 2
-
 
         if ratio is None or ratio >= self.ratio_limit:
             self.landmarks = {
@@ -134,6 +164,24 @@ class LineRepresentation(AbstractRepresentation):
                 'start':  Landmark('start',  PointRepresentation(self.line.start), self, Landmark.SIDE),
                 'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.SIDE)
             }
+
+    @classmethod
+    def from_dict(cls, dikt):
+        ratio = dikt['ratio']
+        line = linesegment_from_dict(dikt['line'])
+        alt_of = AbstractRepresentation.from_dict(dikt['alt_of']) if dikt['alt_of'] else None
+        return LineRepresentation(ratio, line, alt_of)
+
+    def to_dict(self):
+        return {
+            'class': self.__class__.__name__,
+            'ratio': self.ratio,
+            'line': linesegment_to_dict(self.line),
+            'alt_of': self.alt_of.to_dict() if self.alt_of else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def my_project_point(self, point):
         return self.line.project(point)
@@ -185,6 +233,22 @@ class CircleRepresentation(AbstractRepresentation):
             'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
         }
 
+    @classmethod
+    def from_dict(cls, dikt):
+        circ = circle_from_dict(dikt['circ'])
+        alt_of = AbstractRepresentation.from_dict(dikt['alt_of']) if dikt['alt_of'] else None
+        return CircleRepresentation(circ, alt_of)
+
+    def to_dict(self):
+        return {
+            'class': self.__class__.__name__,
+            'circ': circle_to_dict(self.circ),
+            'alt_of': self.alt_of.to_dict() if self.alt_of else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
     def my_project_point(self, point):
         return point
 
@@ -232,6 +296,7 @@ class RectangleRepresentation(AbstractRepresentation):
         self.rect = rect
         self.num_dim = 2
         self.middle = rect.center
+        self.landmarks_to_get = landmarks_to_get
         vert_ratio = self.rect.height / self.rect.width
         horiz_ratio = self.rect.width / self.rect.height
         self.alt_representations = [LineRepresentation( horiz_ratio,
@@ -288,6 +353,24 @@ class RectangleRepresentation(AbstractRepresentation):
         for lmk_name in landmarks_to_get:
             if lmk_name in landmark_constructors:
                 self.landmarks[lmk_name] = eval(landmark_constructors[lmk_name])
+
+    @classmethod
+    def from_dict(cls, dikt):
+        rect = bbox_from_dict(dikt['rect'])
+        landmarks_to_get = dikt['landmarks_to_get']
+        alt_of = AbstractRepresentation.from_dict(dikt['alt_of']) if dikt['alt_of'] else None
+        return RectangleRepresentation(rect, landmarks_to_get, alt_of)
+
+    def to_dict(self):
+        return {
+            'class': self.__class__.__name__,
+            'rect': bbox_to_dict(self.rect),
+            'landmarks_to_get': self.landmarks_to_get,
+            'alt_of': self.alt_of.to_dict() if self.alt_of else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def my_project_point(self, point):
         if self.contains_point( point ):
@@ -353,6 +436,23 @@ class PolygonRepresentation(AbstractRepresentation):
         self.landmarks = {
             'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
         }
+
+    @classmethod
+    def from_dict(cls, dikt):
+        poly = poly_from_dict(dikt['poly'])
+        alt_of = AbstractRepresentation.from_dict(dikt['alt_of']) if dikt['alt_of'] else None
+        return PolygonRepresentation(poly, alt_of)
+
+    def to_dict(self):
+        return {
+            'class': self.__class__.__name__,
+            'poly': poly_to_dict(self.poly),
+            'landmarks_to_get': self.landmarks_to_get,
+            'alt_of': self.alt_of.to_dict() if self.alt_of else None,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def my_project_point(self, point):
         return point
