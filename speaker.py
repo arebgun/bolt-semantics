@@ -37,6 +37,8 @@ from relation import (
     Degree
 )
 
+from utils import categorical_sample, index_max
+
 
 class Speaker(object):
     def __init__(self, location):
@@ -88,11 +90,12 @@ class Speaker(object):
 
         sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
 
-        description = str(trajector.representation.middle) + '; ' + language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
-        print description
+        vec = trajector.representation.middle
+        description = language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
+        print str(vec) + ' ; ' + description
 
         if visualize: self.visualize(scene, trajector, head_on, sampled_landmark, sampled_relation, description, 0.01)
-        return description
+        return description, sampled_relation, sampled_landmark
 
     def get_all_meaning_descriptions(self, trajector, scene, sampled_landmark=None, sampled_relation=None, head_on=None, max_level=-1):
         if sampled_landmark is None or sampled_relation is None or head_on is None:
@@ -274,7 +277,7 @@ class Speaker(object):
         trajector_prob = rel.is_applicable()
         return trajector_prob / (probs.sum() + trajector_prob) if trajector_prob else trajector_prob
 
-    def sample_landmark(self, landmarks, trajector):
+    def sample_landmark(self, landmarks, trajector, usebest=False):
         ''' Weight by inverse of distance to landmark center and choose probabilistically  '''
         epsilon = 0.02
         distances = array([trajector.distance_to( lmk.representation )
@@ -288,7 +291,10 @@ class Speaker(object):
         std = .1
         scores = exp( -(distances/std)**2)
         lm_probabilities = scores/sum(scores)
-        index = lm_probabilities.cumsum().searchsorted( random.sample(1) )[0]
+        if usebest:
+            index = index_max(lm_probabilities)
+        else:
+            index = categorical_sample(lm_probabilities)
 
         sampled_landmark = landmarks[index]
         head_on = self.get_head_on_viewpoint(sampled_landmark)
@@ -473,7 +479,7 @@ class Speaker(object):
 
 
 
-    def sample_relation(self, trajector, bounding_box, perspective, landmark, step=0.02):
+    def sample_relation(self, trajector, bounding_box, perspective, landmark, step=0.02, usebest=False):
         """
         Sample a relation given a trajector and landmark.
         Evaluate each relation and probabilisticaly choose the one that is likely to
@@ -508,6 +514,11 @@ class Speaker(object):
 
         rel_scores = array(rel_scores)
         rel_probabilities = rel_scores/sum(rel_scores)
+        if usebest:
+            index = index_max(rel_probabilities)
+        else:
+            index = categorical_sample(rel_probabilities)
+
         index = rel_probabilities.cumsum().searchsorted( random.sample(1) )[0]
 
         return rel_classes[index], rel_probabilities[index], self.get_entropy(rel_probabilities)
