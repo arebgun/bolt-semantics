@@ -1,4 +1,5 @@
 from uuid import uuid4
+import json
 
 import sys
 sys.path.append("..")
@@ -60,6 +61,22 @@ class Landmark(object):
 
     def __repr__(self):
         return self.name
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'representation': self.representation.to_dict() if self.representation else None,
+            'parent': self.parent.to_dict() if self.parent else None,
+            'object_class': self.object_class,
+            'color': self.color,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    def from_json(desc):
+        od = json.loads(desc)
+        return Landmark.from_dict(od)
 
     def get_primary_axes(self, perspective=None):
         return self.get_top_parent().get_primary_axes()
