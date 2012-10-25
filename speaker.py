@@ -86,6 +86,39 @@ class Speaker(object):
 
         return sampled_landmark, sampled_relation, head_on
 
+    def all_meaning_probs(self, trajector, scene, max_level=-1):
+        scenes = scene.get_child_scenes(trajector) + [scene]
+
+        all_landmarks = []
+
+        for s in scenes:
+            for scene_lmk in s.landmarks.values():
+
+                # Don't want to use the trajector as landmark
+                if scene_lmk == trajector:
+                    continue
+
+                all_landmarks.append([s, scene_lmk])
+
+                representations = [scene_lmk.representation]
+                representations.extend(scene_lmk.representation.get_alt_representations())
+
+                for representation in representations:
+                    for lmk in representation.get_landmarks(max_level):
+                        all_landmarks.append([s, lmk])
+
+        sceness, landmarks = zip( *all_landmarks )
+
+        landmark_probs = self.all_landmark_probs( landmarks, trajector )
+        meaning_probs = []
+        for lmk,lmk_prob in zip(landmarks,landmark_probs):
+            head_on = self.get_head_on_viewpoint( lmk )
+            for rel_prob,rel_class in zip( *self.all_relation_probs( trajector, scene.get_bounding_box(), head_on, lmk, step=0.1 ) ):
+                rel = rel_class( head_on, lmk, trajector )
+                meaning_probs.append(  ( (lmk,rel), lmk_prob*rel_prob )  )
+
+        return meaning_probs
+
     def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False):
 
         sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
@@ -277,8 +310,7 @@ class Speaker(object):
         trajector_prob = rel.is_applicable()
         return trajector_prob / (probs.sum() + trajector_prob) if trajector_prob else trajector_prob
 
-    def sample_landmark(self, landmarks, trajector, usebest=False):
-        ''' Weight by inverse of distance to landmark center and choose probabilistically  '''
+    def all_landmark_probs(self, landmarks, trajector):
         epsilon = 0.02
         distances = array([trajector.distance_to( lmk.representation )
             if not (isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector.representation))
@@ -290,7 +322,12 @@ class Speaker(object):
         # scores = 1.0/(distances + epsilon)**0.5
         std = .1
         scores = exp( -(distances/std)**2)
-        lm_probabilities = scores/sum(scores)
+        return scores/sum(scores)
+
+    def sample_landmark(self, landmarks, trajector, usebest=False):
+        ''' Weight by inverse of distance to landmark center and choose probabilistically  '''
+
+        lm_probabilities = self.all_landmark_probs(landmarks, trajector)
         if usebest:
             index = index_max(lm_probabilities)
         else:
@@ -477,14 +514,7 @@ class Speaker(object):
         lm_probabilities = scores/sum(scores)
         return lm_probabilities[ landmarks.index(sampled_landmark) ], self.get_entropy(lm_probabilities)
 
-
-
-    def sample_relation(self, trajector, bounding_box, perspective, landmark, step=0.02, usebest=False):
-        """
-        Sample a relation given a trajector and landmark.
-        Evaluate each relation and probabilisticaly choose the one that is likely to
-        generate the trajector given a landmark.
-        """
+    def all_relation_probs(self, trajector, bounding_box, perspective, landmark, step=0.02):
         rel_scores = []
         rel_classes = []
 
@@ -513,7 +543,15 @@ class Speaker(object):
             rel_classes.append(dists[1][2])
 
         rel_scores = array(rel_scores)
-        rel_probabilities = rel_scores/sum(rel_scores)
+        return rel_scores/sum(rel_scores), rel_classes
+
+    def sample_relation(self, trajector, bounding_box, perspective, landmark, step=0.02, usebest=False):
+        """
+        Sample a relation given a trajector and landmark.
+        Evaluate each relation and probabilisticaly choose the one that is likely to
+        generate the trajector given a landmark.
+        """
+        rel_probabilities, rel_classes = self.all_relation_probs(trajector, bounding_box, perspective, landmark, step)
         if usebest:
             index = index_max(rel_probabilities)
         else:

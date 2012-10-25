@@ -57,15 +57,15 @@ def construct_training_scene():
                     ObjectClass.PRISM,
                     Color.ORANGE)
 
-    t_rep = table.to_dict()
-    #scene.add_landmark(table)
-    scene.add_landmark(serialize.landmark_from_dict(t_rep))
+    # t_rep = table.to_dict()
+    scene.add_landmark(table)
+    # scene.add_landmark(serialize.landmark_from_dict(t_rep))
 
     for obj in (obj1, obj2, obj3, obj4, obj5):
-        o_rep = obj.to_dict()
+        # o_rep = obj.to_dict()
         obj.representation.alt_representations = []
-        #scene.add_landmark(obj)
-        scene.add_landmark(serialize.landmark_from_dict(o_rep))
+        scene.add_landmark(obj)
+        # scene.add_landmark(serialize.landmark_from_dict(o_rep))
 
     return scene, speaker
 
