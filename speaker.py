@@ -55,8 +55,8 @@ class Speaker(object):
 
     def sample_meaning(self, trajector, scene, max_level=-1):
 
-        scenes = scene.get_child_scenes(trajector) + [scene]
-
+        # scenes = scene.get_child_scenes(trajector) + [scene]
+        scenes = [scene]
         all_landmarks = []
 
         for s in scenes:
@@ -87,8 +87,8 @@ class Speaker(object):
         return sampled_landmark, sampled_relation, head_on
 
     def all_meaning_probs(self, trajector, scene, max_level=-1):
-        scenes = scene.get_child_scenes(trajector) + [scene]
-
+        # scenes = scene.get_child_scenes(trajector) + [scene]
+        scenes = [scene]
         all_landmarks = []
 
         for s in scenes:
@@ -113,6 +113,7 @@ class Speaker(object):
         meaning_probs = []
         for lmk,lmk_prob in zip(landmarks,landmark_probs):
             head_on = self.get_head_on_viewpoint( lmk )
+            self.set_orientations(lmk, head_on)
             for rel_prob,rel_class in zip( *self.all_relation_probs( trajector, scene.get_bounding_box(), head_on, lmk, step=0.1 ) ):
                 rel = rel_class( head_on, lmk, trajector )
                 meaning_probs.append(  ( (lmk,rel), lmk_prob*rel_prob )  )
@@ -493,7 +494,7 @@ class Speaker(object):
                 perspective = self.get_head_on_viewpoint(landmark)
                 self.set_orientations(landmark, perspective)
                 # lmk_rel_dict[landmark] = dict( zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective)) )
-                lmk_rel_tuples.extend( [(landmark, rels, heatmaps) for rels,heatmaps in zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective))] )
+                lmk_rel_tuples.extend( [(landmark, rel, heatmaps) for rel,heatmaps in zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective))] )
                 sys.stdout.write('\b.\\')
                 sys.stdout.flush()
             print
