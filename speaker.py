@@ -39,6 +39,23 @@ from relation import (
 
 from utils import categorical_sample, index_max
 
+from multiprocessing import Process, Pipe
+from itertools import izip
+
+def spawn(f):
+    def fun(ppipe, cpipe,x):
+        ppipe.close()
+        cpipe.send(f(x))
+        cpipe.close()
+    return fun
+
+def parmap(f,X):
+    pipe=[Pipe() for x in X]
+    proc=[Process(target=spawn(f),args=(p,c,x)) for x,(p,c) in izip(X,pipe)]
+    [p.start() for p in proc]
+    ret = [p.recv() for (p,c) in pipe]
+    [p.join() for p in proc]
+    return ret
 
 class Speaker(object):
     def __init__(self, location):
@@ -418,7 +435,8 @@ class Speaker(object):
                     relations.append(relation)
 
             for rel in OrientationRelationSet.relations:
-                for dist_class, deg_class in list(product([Measurement.FAR],Degree.all)) + [(Measurement.NONE,Degree.NONE)]:
+                # for dist_class, deg_class in list(product([Measurement.FAR],Degree.all)) + [(Measurement.NONE,Degree.NONE)]:
+                for dist_class, deg_class in [(Measurement.NONE,Degree.NONE)]:
                     relation = rel( perspective, landmark, bullshit_trajector )
                     relation.measurement.best_distance_class = dist_class
                     relation.measurement.best_degree_class = deg_class
@@ -497,6 +515,18 @@ class Speaker(object):
                 lmk_rel_tuples.extend( [(landmark, rel, heatmaps) for rel,heatmaps in zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective))] )
                 sys.stdout.write('\b.\\')
                 sys.stdout.flush()
+
+            # def something(llpolp):
+            #     landmark,landmark_prob,original_landmark_prob = llpolp
+            #     perspective = self.get_head_on_viewpoint(landmark)
+            #     self.set_orientations(landmark, perspective)
+            #     # lmk_rel_dict[landmark] = dict( zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective)) )
+            #     sys.stdout.write('\b.\\')
+            #     return [(landmark, rel, heatmaps) for rel,heatmaps in zip(*self.get_relation_probs_for_points(points, landmark, landmark_prob, original_landmark_prob, perspective))]
+
+            # results = parmap(something, zip(landmarks, landmark_probs, original_landmark_probs))
+            # for result in results:
+            #     lmk_rel_tuples.extend(result)
             print
             return lmk_rel_tuples
 

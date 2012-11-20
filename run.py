@@ -18,9 +18,29 @@ from representation import (
 
 #from configurations import adapter
 
-def construct_training_scene():
+def randrange(lower,upper):
+    width = upper-lower
+    return random() * width + lower
+
+def too_close(p1,p2):
+    return (abs(p1[0] - p2[0]) <= 0.035) and (abs(p1[1] - p2[1]) <= 0.045)
+
+def construct_training_scene(random=False):
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
+
+    if random:
+        x_range = (-0.4+0.035, 0.4-0.035)
+        y_range = (0.4+0.045, 1.0-0.045)
+        centers = []
+        for _ in range(5):
+            condition = True
+            while condition:
+                new_point = (randrange(*x_range),randrange(*y_range))
+                condition = (sum( [too_close(new_point,p) for p in centers] ) > 0)
+            centers.append( new_point )
+    else:
+        centers = [(0.05, 0.9), (0.05, 0.7), (0, 0.55), (-0.3,0.7), (0.3,0.7)]
 
     table = Landmark('table',
                      RectangleRepresentation(rect=BoundingBox([Vec2(-0.4,0.4), Vec2(0.4,1.0)])),
@@ -28,31 +48,36 @@ def construct_training_scene():
                      ObjectClass.TABLE)
 
     obj1 = Landmark('green_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(0.05-0.035,0.9-0.035), Vec2(0.05+0.035,0.9+0.035)]), landmarks_to_get=[]),
+                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[0][0]-0.035,centers[0][1]-0.035),
+                                                              Vec2(centers[0][0]+0.035,centers[0][1]+0.035)]), landmarks_to_get=[]),
                     None,
                     ObjectClass.CUP,
                     Color.GREEN)
 
     obj2 = Landmark('blue_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(0.05-0.035,0.7-0.035), Vec2(0.05+0.035,0.7+0.035)]), landmarks_to_get=[]),
+                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[1][0]-0.035,centers[1][1]-0.035), 
+                                                              Vec2(centers[1][0]+0.035,centers[1][1]+0.035)]), landmarks_to_get=[]),
                     None,
                     ObjectClass.CUP,
                     Color.BLUE)
 
     obj3 = Landmark('pink_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(0-0.035,0.55-0.035), Vec2(0+0.035,0.55+0.035)]), landmarks_to_get=[]),
+                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[2][0]-0.035,centers[2][1]-0.035), 
+                                                              Vec2(centers[2][0]+0.035,centers[2][1]+0.035)]), landmarks_to_get=[]),
                     None,
                     ObjectClass.CUP,
                     Color.PINK)
 
     obj4 = Landmark('purple_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(-0.3-0.035,0.7-0.045), Vec2(-0.3+0.035,0.7+0.045)]), landmarks_to_get=[]),
+                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[3][0]-0.035,centers[3][1]-0.045), 
+                                                              Vec2(centers[3][0]+0.035,centers[3][1]+0.045)]), landmarks_to_get=[]),
                     None,
                     ObjectClass.PRISM,
                     Color.PURPLE)
 
     obj5 = Landmark('orange_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(0.3-0.035,0.7-0.045), Vec2(0.3+0.035,0.7+0.045)]), landmarks_to_get=[]),
+                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[4][0]-0.035,centers[4][1]-0.045), 
+                                                              Vec2(centers[4][0]+0.035,centers[4][1]+0.045)]), landmarks_to_get=[]),
                     None,
                     ObjectClass.PRISM,
                     Color.ORANGE)
