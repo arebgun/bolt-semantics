@@ -16,6 +16,8 @@ class_to_words = {
     ObjectClass.CUP:      {'N' : ['cup']},
     ObjectClass.BOTTLE:   {'N' : ['bottle']},
     ObjectClass.PRISM:    {'N' : ['prism', 'triangle']},
+    ObjectClass.BOX:      {'N' : ['box', 'rectangle', 'block']},
+    ObjectClass.CYLINDER: {'N' : ['cylinder', 'tube']},
     Color.RED:            {'A' : ['red']},
     Color.GREEN:          {'A' : ['green']},
     Color.PURPLE:         {'A' : ['purple']},

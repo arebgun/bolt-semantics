@@ -120,7 +120,7 @@ class Speaker(object):
 
         return meaning_probs
 
-    def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False):
+    def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False, step=0.01):
 
         sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
 
@@ -128,7 +128,7 @@ class Speaker(object):
         description = language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
         print str(vec) + ' ; ' + description
 
-        if visualize: self.visualize(scene, trajector, head_on, sampled_landmark, sampled_relation, description, 0.01)
+        if visualize: self.visualize(scene, trajector, head_on, sampled_landmark, sampled_relation, description, step)
         return description, sampled_relation, sampled_landmark
 
     def get_all_meaning_descriptions(self, trajector, scene, sampled_landmark=None, sampled_relation=None, head_on=None, max_level=-1):

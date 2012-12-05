@@ -30,8 +30,10 @@ class ObjectClass(object):
     CUP = 'CUP'
     BOTTLE = 'BOTTLE'
     PRISM= 'PRISM'
+    BOX = 'BOX'
+    CYLINDER = 'CYLINDER'
 
-    all = [TABLE, CHAIR, CUP, BOTTLE, PRISM]
+    all = [TABLE, CHAIR, CUP, BOTTLE, PRISM, BOX, CYLINDER]
 
 class Landmark(object):
     EDGE = 'EDGE'
