@@ -8,7 +8,7 @@ from numpy import array, zeros, maximum
 from scipy.stats import norm
 from planar import Vec2, Affine
 from planar.line import LineSegment, Ray
-from representation import PointRepresentation
+from representation import PointRepresentation, SurfaceRepresentation
 from itertools import product
 
 
@@ -137,13 +137,18 @@ class DistanceRelation(Relation):
         self.measurement = Measurement(self.distance)
 
     def is_applicable(self):
-        if not self.landmark.representation.contains( self.trajector.representation ):
+        if not (self.landmark.representation.contains( self.trajector.representation )
+           or isinstance(self.landmark.representation, SurfaceRepresentation)):
             return self.measurement.is_applicable()
         else:
             return 0.0
 
     def are_applicable(self, point_array):
         distances = zeros( point_array.shape[0] )
+
+        if isinstance(self.landmark.representation, SurfaceRepresentation):
+            return distances #return zeros
+
         for i,point in enumerate(point_array):
             distances[i] = self.landmark.distance_to_point(point)
         return self.measurement.are_applicable(distances)
@@ -174,15 +179,15 @@ class ToRelation(DistanceRelation):
         self.measurement = Measurement(distance=self.distance, distance_class=Measurement.NEAR)
 
 
-class VeryCloseDistanceRelation(DistanceRelation):
-    def __init__(self, perspective, landmark, trajector):
-        super(VeryCloseDistanceRelation, self).__init__(perspective, landmark, trajector)
-        self.measurement = Measurement(distance=self.distance, distance_class=Measurement.NEAR, degree_class=Degree.VERY)
+# class VeryCloseDistanceRelation(DistanceRelation):
+#     def __init__(self, perspective, landmark, trajector):
+#         super(VeryCloseDistanceRelation, self).__init__(perspective, landmark, trajector)
+#         self.measurement = Measurement(distance=self.distance, distance_class=Measurement.NEAR, degree_class=Degree.VERY)
 
 
-class NextToRelation(VeryCloseDistanceRelation):
-    def __init__(self, perspective, landmark, trajector):
-        super(NextToRelation, self).__init__(perspective, landmark, trajector)
+# class NextToRelation(VeryCloseDistanceRelation):
+#     def __init__(self, perspective, landmark, trajector):
+#         super(NextToRelation, self).__init__(perspective, landmark, trajector)
 
 
 class ContainmentRelation(Relation):
@@ -319,7 +324,7 @@ class RightRelation(OrientationRelation):
 class DistanceRelationSet(RelationSet):
 
     epsilon = 1e-6
-    relations = [FromRelation, ToRelation, NextToRelation]
+    relations = [FromRelation, ToRelation]#, NextToRelation]
 
     @classmethod
     def sample_landmark(class_, landmarks, trajector):

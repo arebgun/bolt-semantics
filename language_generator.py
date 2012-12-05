@@ -35,7 +35,7 @@ class_to_words = {
     Landmark.POINT:    {'N' : ['point']},
     FromRelation:      {'P' : ['from']},
     ToRelation:        {'P' : ['to']},
-    NextToRelation:    {'P' : ['at', 'by']},#['next to', 'at', 'by']},
+    # NextToRelation:    {'P' : ['at', 'by']},#['next to', 'at', 'by']},
     OnRelation:        {'P' : ['on']},
     InFrontRelation:   {'P' : ['in front of'], 'A' : ['front', 'near']},
     BehindRelation:    {'P' : ['behind'], 'A' : ['back', 'far']},
@@ -64,9 +64,9 @@ phrase_to_class = {
     'line': Landmark.LINE,
     'from': FromRelation,
     'to':   ToRelation,
-    'next to':  NextToRelation,
-    'at':  NextToRelation,
-    'by':  NextToRelation,
+    # 'next to':  NextToRelation,
+    # 'at':  NextToRelation,
+    # 'by':  NextToRelation,
     'on':   OnRelation,
     'in front of':  InFrontRelation,
     'front':    InFrontRelation,
@@ -104,7 +104,7 @@ def get_landmark_description(perspective, landmark, delimit_chunks=False):
 
 def get_relation_description(relation, delimit_chunks=False):
     desc = ''
-    if hasattr(relation, 'measurement') and not isinstance(relation,VeryCloseDistanceRelation): #TODO create another class called AdjacentRelation
+    if hasattr(relation, 'measurement'):# and not isinstance(relation,VeryCloseDistanceRelation): #TODO create another class called AdjacentRelation
         m = relation.measurement
         degree = choice(class_to_words[m.best_degree_class]['R'])
         distance = choice(class_to_words[m.best_distance_class]['A'])
@@ -137,7 +137,7 @@ def get_all_landmark_descriptions(perspective, trajector, landmark):
 def get_all_relation_descriptions(relation):
     lists = []
 
-    if hasattr(relation, 'measurement') and not isinstance(relation,VeryCloseDistanceRelation):
+    if hasattr(relation, 'measurement'):# and not isinstance(relation,VeryCloseDistanceRelation):
         m = relation.measurement
         lists.append(class_to_words[m.best_degree_class]['R'])
         lists.append(class_to_words[m.best_distance_class]['A'])

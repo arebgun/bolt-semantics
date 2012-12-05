@@ -27,6 +27,7 @@ from representation import (
     LineRepresentation,
     GroupLineRepresentation,
     RectangleRepresentation,
+    SurfaceRepresentation
 )
 
 from relation import (
@@ -330,6 +331,11 @@ class Speaker(object):
 
     def all_landmark_probs(self, landmarks, trajector):
         epsilon = 0.02
+        distances = []
+        # for lmk in landmarks:
+        #     if isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector.representation):
+        #         distances.append( 9*epsilon ) # Give some arbitrary weight to the surface you're on, even if no distance
+
         distances = array([trajector.distance_to( lmk.representation )
             if not (isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector.representation))
             else 9*epsilon for lmk in landmarks])
@@ -340,6 +346,7 @@ class Speaker(object):
         # scores = 1.0/(distances + epsilon)**0.5
         std = .1
         scores = exp( -(distances/std)**2)
+        scores = [0 if isinstance(lmk.representation,SurfaceRepresentation) else score for lmk,score in zip(landmarks,scores)]
         return scores/sum(scores)
 
     def sample_landmark(self, landmarks, trajector, usebest=False):
@@ -423,20 +430,21 @@ class Speaker(object):
 
             bullshit_trajector = Landmark( None, PointRepresentation( Vec2(0,0) ), None )
             relations = []
-            for rel in DistanceRelationSet.relations:
-                for dist_class, deg_class in list(product([Measurement.NEAR,Measurement.FAR],Degree.all)):
-                    relation = rel( perspective, landmark, bullshit_trajector )
-                    relation.measurement.best_distance_class = dist_class
-                    relation.measurement.best_degree_class = deg_class
-                    relations.append(relation)
+            if not isinstance(landmark.representation, SurfaceRepresentation):
+                for rel in DistanceRelationSet.relations:
+                    for dist_class, deg_class in list(product([Measurement.NEAR,Measurement.FAR],Degree.all)):
+                        relation = rel( perspective, landmark, bullshit_trajector )
+                        relation.measurement.best_distance_class = dist_class
+                        relation.measurement.best_degree_class = deg_class
+                        relations.append(relation)
 
             for rel in ContainmentRelationSet.relations:
                     relation = rel( perspective, landmark, bullshit_trajector )
                     relations.append(relation)
 
             for rel in OrientationRelationSet.relations:
-                # for dist_class, deg_class in list(product([Measurement.FAR],Degree.all)) + [(Measurement.NONE,Degree.NONE)]:
-                for dist_class, deg_class in [(Measurement.NONE,Degree.NONE)]:
+                for dist_class, deg_class in list(product([Measurement.FAR],Degree.all)) + [(Measurement.NONE,Degree.NONE)]:
+                # for dist_class, deg_class in [(Measurement.NONE,Degree.NONE)]:
                     relation = rel( perspective, landmark, bullshit_trajector )
                     relation.measurement.best_distance_class = dist_class
                     relation.measurement.best_degree_class = deg_class

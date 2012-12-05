@@ -29,9 +29,11 @@ def construct_training_scene(random=False):
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
+    table_ll = (-0.4,0.4)
+    table_ur = (0.4,1.6)
     if random:
-        x_range = (-0.4+0.035, 0.4-0.035)
-        y_range = (0.4+0.045, 1.0-0.045)
+        x_range = (table_ll[0]+0.035, table_ur[0]-0.035)
+        y_range = (table_ll[1]+0.045, table_ur[1]-0.045)
         centers = []
         for _ in range(5):
             condition = True
@@ -43,7 +45,7 @@ def construct_training_scene(random=False):
         centers = [(0.05, 0.9), (0.05, 0.7), (0, 0.55), (-0.3,0.7), (0.3,0.7)]
 
     table = Landmark('table',
-                     RectangleRepresentation(rect=BoundingBox([Vec2(-0.4,0.4), Vec2(0.4,1.0)])),
+                     RectangleRepresentation(rect=BoundingBox([Vec2(*table_ll), Vec2(*table_ur)])),
                      None,
                      ObjectClass.TABLE)
 
