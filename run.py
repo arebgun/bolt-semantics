@@ -16,16 +16,60 @@ from representation import (
     RectangleRepresentation,
 )
 
+import json
+from pprint import pprint
+import sys
 #from configurations import adapter
 
-def randrange(lower,upper):
-    width = upper-lower
-    return random() * width + lower
+def load_scene(file):
+    jtoclass = {
+        u'Box': ObjectClass.BOX,
+        u'Cylinder': ObjectClass.CYLINDER,
+    }
 
-def too_close(p1,p2):
-    return (abs(p1[0] - p2[0]) <= 0.035) and (abs(p1[1] - p2[1]) <= 0.045)
+    jtocolor = {
+        u'yellow': Color.YELLOW,
+        u'orange': Color.ORANGE,
+        u'red': Color.RED,
+    }
 
-def construct_training_scene(random=False):
+    json_data=open(file)
+    data = json.load(json_data)
+    json_data.close()
+
+    pprint(data)
+
+    camera_spec = data[u'cam']
+    speaker = Speaker(Vec2(camera_spec[u'loc'][2], camera_spec[u'loc'][0]))
+    scene = Scene(3)
+
+    table_spec = data[u'table']
+    t_min = Vec2(table_spec[u'aabb'][u'min'][2], table_spec[u'aabb'][u'min'][0])
+    t_max = Vec2(table_spec[u'aabb'][u'max'][2], table_spec[u'aabb'][u'max'][0])
+    table = Landmark('table',
+                     RectangleRepresentation(rect=BoundingBox([t_min, t_max])),
+                     None,
+                     ObjectClass.TABLE)
+
+    scene.add_landmark(table)
+
+    object_specs = data[u'objects']
+    print 'there are', len(object_specs), 'objects on the table'
+
+    for i,obj_spec in enumerate(object_specs):
+        o_min = Vec2(obj_spec[u'aabb'][u'min'][2], obj_spec[u'aabb'][u'min'][0])
+        o_max = Vec2(obj_spec[u'aabb'][u'max'][2], obj_spec[u'aabb'][u'max'][0])
+        obj = Landmark('object_%s' % obj_spec[u'name'],
+                        RectangleRepresentation(rect=BoundingBox([o_min, o_max]), landmarks_to_get=[]),
+                        None,
+                        jtoclass[obj_spec[u'type']],
+                        jtocolor[obj_spec[u'color-name']])
+        obj.representation.alt_representations = []
+        scene.add_landmark(obj)
+
+    return scene, speaker
+
+def construct_training_scene():
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
@@ -77,7 +121,9 @@ def construct_training_scene(random=False):
     return scene, speaker
 
 if __name__ == '__main__':
-    scene, speaker = construct_training_scene()
+    scene, speaker = load_scene(sys.argv[1])
+    # exit(1)
+    # scene, speaker = construct_training_scene()
 
 #    lmks = [lmk for lmk in scene.landmarks.values() if not lmk.name == 'table']
 #    groups = adapter.adapt(lmks)
@@ -90,10 +136,17 @@ if __name__ == '__main__':
 
     dozen = 12
     couple = 1
+
+    table = scene.landmarks['table'].representation.rect
+    t_min = table.min_point
+    t_max = table.max_point
+    t_w = table.width
+    t_h = table.height
+
     for i in range(couple * dozen):
-        location = Landmark( 'point', PointRepresentation(Vec2(random()*0.8-0.4,random()*0.6+0.4)), None, Landmark.POINT)
+        location = Landmark( 'point', PointRepresentation(Vec2(random()*t_w+t_min.x, random()*t_h+t_min.y)), None, Landmark.POINT)
         trajector = location#obj2
-        speaker.describe(trajector, scene, True, 1)
+        speaker.describe(trajector, scene, False, 1, step=0.1)
         # speaker.get_all_meaning_descriptions(trajector, scene, 1)
     # location = Vec2(5.68, 5.59)##Vec2(5.3, 5.5)
     # speaker.demo(location, scene)
