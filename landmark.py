@@ -32,8 +32,9 @@ class ObjectClass(object):
     PRISM= 'PRISM'
     BOX = 'BOX'
     CYLINDER = 'CYLINDER'
+    SPHERE = 'SPHERE'
 
-    all = [TABLE, CHAIR, CUP, BOTTLE, PRISM, BOX, CYLINDER]
+    all = [TABLE, CHAIR, CUP, BOTTLE, PRISM, BOX, CYLINDER, SPHERE]
 
 class Landmark(object):
     EDGE = 'EDGE'

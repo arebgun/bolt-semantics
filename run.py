@@ -19,6 +19,7 @@ from representation import (
 import json
 from pprint import pprint
 import sys
+import os
 #from configurations import adapter
 
 def randrange(lower,upper):
@@ -32,19 +33,24 @@ def load_scene(file):
     jtoclass = {
         u'Box': ObjectClass.BOX,
         u'Cylinder': ObjectClass.CYLINDER,
+        u'Sphere': ObjectClass.SPHERE,
     }
 
     jtocolor = {
         u'yellow': Color.YELLOW,
         u'orange': Color.ORANGE,
         u'red': Color.RED,
+        u'green': Color.GREEN,
+        u'purple': Color.PURPLE,
+        u'blue': Color.BLUE,
+        u'pink': Color.PINK,
     }
 
     json_data=open(file)
     data = json.load(json_data)
     json_data.close()
 
-    pprint(data)
+    #pprint(data)
 
     camera_spec = data[u'cam']
     speaker = Speaker(Vec2(camera_spec[u'loc'][2], camera_spec[u'loc'][0]))
@@ -147,9 +153,18 @@ def construct_training_scene(random=False):
 
     return scene, speaker
 
+def read_scenes(dir):
+    infos = []
+    for root, dirs, files in os.walk(dir): # Walk directory tree
+        for name in files:
+            if '.json' in name:
+                infos.append( load_scene(os.path.join(root, name)) )
+    return infos
+
 if __name__ == '__main__':
-    scene, speaker = load_scene(sys.argv[1])
-    # exit(1)
+    print len(read_scenes(sys.argv[1]))
+    #scene, speaker = load_scene(sys.argv[1])
+    exit(1)
     # scene, speaker = construct_training_scene()
 
 #    lmks = [lmk for lmk in scene.landmarks.values() if not lmk.name == 'table']

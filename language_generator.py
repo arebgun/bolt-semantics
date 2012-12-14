@@ -18,6 +18,7 @@ class_to_words = {
     ObjectClass.PRISM:    {'N' : ['prism', 'triangle']},
     ObjectClass.BOX:      {'N' : ['box', 'rectangle', 'block']},
     ObjectClass.CYLINDER: {'N' : ['cylinder', 'tube']},
+    ObjectClass.SPHERE:   {'N' : ['sphere', 'ball']},
     Color.RED:            {'A' : ['red']},
     Color.GREEN:          {'A' : ['green']},
     Color.PURPLE:         {'A' : ['purple']},
