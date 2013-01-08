@@ -52,8 +52,6 @@ def load_scene(file, normalize=False):
 
     #pprint(data)
 
-    camera_spec = data[u'cam']
-    speaker = Speaker(Vec2(camera_spec[u'loc'][2], camera_spec[u'loc'][0]))
     scene = Scene(3)
 
     table_spec = data[u'table']
@@ -62,17 +60,13 @@ def load_scene(file, normalize=False):
 
     width = t_max.x - t_min.x
     height = t_max.y - t_min.y
-    center = Vec2(width/2.0+t_min.x, height/2.0+t_min.y)
-    print 'table before: height=%f, width=%f' % (height, width)
     if normalize: norm_factor = width if width <= height else height
-    else: norm_factor = 1
-    width /= norm_factor
-    height /= norm_factor
-    print 'table after: height=%f, width=%f' % (height, width)
-    print 'table center=%s' % center
+
+    t_min = Vec2(t_min.x / norm_factor, t_min.y / norm_factor)
+    t_max = Vec2(t_max.x / norm_factor, t_max.y / norm_factor)
 
     table = Landmark('table',
-                     RectangleRepresentation(rect=BoundingBox.from_center(center, width, height)),
+                     RectangleRepresentation(rect=BoundingBox([t_min, t_max])),
                      None,
                      ObjectClass.TABLE)
 
@@ -87,25 +81,21 @@ def load_scene(file, normalize=False):
 
         width = o_max.x - o_min.x
         height = o_max.y - o_min.y
-        ocenter = Vec2(width/2.0+o_min.x, height/2.0+o_min.y)
-        print 'object before: height=%f, width=%f' % (height, width)
-        width /= norm_factor
-        height /= norm_factor
-        print 'object center before=%s' % ocenter
-        ocenter -= center
-        ocenter =  Vec2(ocenter.x / norm_factor, ocenter.y / norm_factor)
-        ocenter += center
-        print 'object after: height=%f, width=%f' % (height, width)
-        print 'object center=%s' % ocenter
+
+        o_min = Vec2(o_min.x / norm_factor, o_min.y / norm_factor)
+        o_max = Vec2(o_max.x / norm_factor, o_max.y / norm_factor)
 
         obj = Landmark('object_%s' % obj_spec[u'name'],
-                        RectangleRepresentation(rect=BoundingBox.from_center(ocenter, width, height), landmarks_to_get=[]),
+                        RectangleRepresentation(rect=BoundingBox([o_min, o_max]), landmarks_to_get=[]),
                         None,
                         jtoclass[obj_spec[u'type']],
                         jtocolor[obj_spec[u'color-name']])
 
         obj.representation.alt_representations = []
         scene.add_landmark(obj)
+
+    camera_spec = data[u'cam']
+    speaker = Speaker(Vec2(camera_spec[u'loc'][2] / norm_factor, camera_spec[u'loc'][0] / norm_factor))
 
     return scene, speaker
 
