@@ -29,7 +29,7 @@ def randrange(lower,upper):
 def too_close(p1,p2):
     return (abs(p1[0] - p2[0]) <= 0.035) and (abs(p1[1] - p2[1]) <= 0.045)
 
-def load_scene(file):
+def load_scene(file, normalize=False):
     jtoclass = {
         u'Box': ObjectClass.BOX,
         u'Cylinder': ObjectClass.CYLINDER,
@@ -59,8 +59,17 @@ def load_scene(file):
     table_spec = data[u'table']
     t_min = Vec2(table_spec[u'aabb'][u'min'][2], table_spec[u'aabb'][u'min'][0])
     t_max = Vec2(table_spec[u'aabb'][u'max'][2], table_spec[u'aabb'][u'max'][0])
+
+    width = t_max.x - t_min.x
+    height = t_max.y - t_min.y
+    if normalize: norm_factor = width if width <= height else height
+    else: norm_factor = 1
+    width /= norm_factor
+    height /= norm_factor
+    center = Vec2((t_max.x-t_min.x)/2.0, (t_max.y-t_min.y)/2.0)
+
     table = Landmark('table',
-                     RectangleRepresentation(rect=BoundingBox([t_min, t_max])),
+                     RectangleRepresentation(rect=BoundingBox.from_center(center, width, height)),
                      None,
                      ObjectClass.TABLE)
 
@@ -72,11 +81,19 @@ def load_scene(file):
     for i,obj_spec in enumerate(object_specs):
         o_min = Vec2(obj_spec[u'aabb'][u'min'][2], obj_spec[u'aabb'][u'min'][0])
         o_max = Vec2(obj_spec[u'aabb'][u'max'][2], obj_spec[u'aabb'][u'max'][0])
+
+        width = t_max.x - t_min.x
+        height = t_max.y - t_min.y
+        width /= norm_factor
+        height /= norm_factor
+        center = Vec2((o_max.x-o_min.x)/2.0, (o_max.y-o_min.y)/2.0)
+
         obj = Landmark('object_%s' % obj_spec[u'name'],
-                        RectangleRepresentation(rect=BoundingBox([o_min, o_max]), landmarks_to_get=[]),
+                        RectangleRepresentation(rect=BoundingBox.from_center(center, width, height), landmarks_to_get=[]),
                         None,
                         jtoclass[obj_spec[u'type']],
                         jtocolor[obj_spec[u'color-name']])
+
         obj.representation.alt_representations = []
         scene.add_landmark(obj)
 
@@ -153,16 +170,16 @@ def construct_training_scene(random=False):
 
     return scene, speaker
 
-def read_scenes(dir):
+def read_scenes(dir, normalize=False):
     infos = []
     for root, dirs, files in os.walk(dir): # Walk directory tree
         for name in files:
             if '.json' in name:
-                infos.append( load_scene(os.path.join(root, name)) )
+                infos.append( load_scene(os.path.join(root, name), normalize) )
     return infos
 
 if __name__ == '__main__':
-    print len(read_scenes(sys.argv[1]))
+    print len(read_scenes(sys.argv[1], True))
     #scene, speaker = load_scene(sys.argv[1])
     exit(1)
     # scene, speaker = construct_training_scene()
