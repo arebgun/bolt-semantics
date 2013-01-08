@@ -62,11 +62,14 @@ def load_scene(file, normalize=False):
 
     width = t_max.x - t_min.x
     height = t_max.y - t_min.y
+    center = Vec2(width/2.0+t_min.x, height/2.0+t_min.y)
+    print 'table before: height=%f, width=%f' % (height, width)
     if normalize: norm_factor = width if width <= height else height
     else: norm_factor = 1
     width /= norm_factor
     height /= norm_factor
-    center = Vec2((t_max.x-t_min.x)/2.0, (t_max.y-t_min.y)/2.0)
+    print 'table after: height=%f, width=%f' % (height, width)
+    print 'table center=%s' % center
 
     table = Landmark('table',
                      RectangleRepresentation(rect=BoundingBox.from_center(center, width, height)),
@@ -82,14 +85,21 @@ def load_scene(file, normalize=False):
         o_min = Vec2(obj_spec[u'aabb'][u'min'][2], obj_spec[u'aabb'][u'min'][0])
         o_max = Vec2(obj_spec[u'aabb'][u'max'][2], obj_spec[u'aabb'][u'max'][0])
 
-        width = t_max.x - t_min.x
-        height = t_max.y - t_min.y
+        width = o_max.x - o_min.x
+        height = o_max.y - o_min.y
+        ocenter = Vec2(width/2.0+o_min.x, height/2.0+o_min.y)
+        print 'object before: height=%f, width=%f' % (height, width)
         width /= norm_factor
         height /= norm_factor
-        center = Vec2((o_max.x-o_min.x)/2.0, (o_max.y-o_min.y)/2.0)
+        print 'object center before=%s' % ocenter
+        ocenter -= center
+        ocenter =  Vec2(ocenter.x / norm_factor, ocenter.y / norm_factor)
+        ocenter += center
+        print 'object after: height=%f, width=%f' % (height, width)
+        print 'object center=%s' % ocenter
 
         obj = Landmark('object_%s' % obj_spec[u'name'],
-                        RectangleRepresentation(rect=BoundingBox.from_center(center, width, height), landmarks_to_get=[]),
+                        RectangleRepresentation(rect=BoundingBox.from_center(ocenter, width, height), landmarks_to_get=[]),
                         None,
                         jtoclass[obj_spec[u'type']],
                         jtocolor[obj_spec[u'color-name']])
