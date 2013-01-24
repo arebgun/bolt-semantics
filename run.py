@@ -60,7 +60,7 @@ def load_scene(file, normalize=False):
 
     width = t_max.x - t_min.x
     height = t_max.y - t_min.y
-    if normalize: norm_factor = width if width <= height else height
+    if normalize: norm_factor = width if width >= height else height
 
     t_min = Vec2(t_min.x / norm_factor, t_min.y / norm_factor)
     t_max = Vec2(t_max.x / norm_factor, t_max.y / norm_factor)
@@ -97,6 +97,7 @@ def load_scene(file, normalize=False):
     camera_spec = data[u'cam']
     speaker = Speaker(Vec2(camera_spec[u'loc'][2] / norm_factor, camera_spec[u'loc'][0] / norm_factor))
 
+    # speaker.visualize(scene, obj, Vec2(0,0), None, None, '')
     return scene, speaker
 
 def construct_training_scene(random=False):

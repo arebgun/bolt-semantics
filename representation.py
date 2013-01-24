@@ -362,7 +362,7 @@ class RectangleRepresentation(AbstractRepresentation):
                                                                                                     rect.max_point])), self, Landmark.CORNER)''',
                 'lr_corner_surf': '''Landmark('lr_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/4.0,
                                                                                                          rect.min_point.y),
-                                                                                                    Vec2(rect.min_point.x,
+                                                                                                    Vec2(rect.max_point.x,
                                                                                                          rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER)''',
                 'ul_corner_surf': '''Landmark('ul_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x,
                                                                                                          rect.max_point.y-min_dimension/4.0),
