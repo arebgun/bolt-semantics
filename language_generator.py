@@ -48,7 +48,7 @@ class_to_words = {
     Degree.SOMEWHAT:   {'R' : ['somewhat']},
     Degree.VERY:       {'R' : ['very']},
     Measurement.NONE:  {'A' : ['']},
-    Measurement.FAR:   {'A' : ['far',]},
+    Measurement.FAR:   {'A' : ['far']},
     Measurement.NEAR:  {'A' : ['near', 'close','next']},
 }
 
