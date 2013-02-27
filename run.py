@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import random
+from random import random, choice
 from planar import Vec2, BoundingBox
 from speaker import Speaker
 from scene import Scene
@@ -20,6 +20,7 @@ import json
 from pprint import pprint
 import sys
 import os
+from time import time
 #from configurations import adapter
 
 def randrange(lower,upper):
@@ -60,7 +61,7 @@ def load_scene(file, normalize=False):
 
     width = t_max.x - t_min.x
     height = t_max.y - t_min.y
-    if normalize: norm_factor = width if width <= height else height
+    if normalize: norm_factor = width if width >= height else height
 
     t_min = Vec2(t_min.x / norm_factor, t_min.y / norm_factor)
     t_max = Vec2(t_max.x / norm_factor, t_max.y / norm_factor)
@@ -99,74 +100,62 @@ def load_scene(file, normalize=False):
 
     return scene, speaker
 
-def construct_training_scene(random=False):
+def construct_training_scene(random=False, num_objects=5):
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
     table_ll = (-0.4,0.4)
     table_ur = (0.4,1.6)
+
+    class_choices = ObjectClass.all[:]
+    class_choices.remove(ObjectClass.TABLE)
+    class_choices.remove(ObjectClass.CHAIR)
+
     if random:
-        x_range = (table_ll[0]+0.035, table_ur[0]-0.035)
-        y_range = (table_ll[1]+0.045, table_ur[1]-0.045)
+        names = []
         centers = []
-        for _ in range(5):
+        classes = []
+        colors = []
+        offsets = []
+
+        x_range = (table_ll[0] + 0.035, table_ur[0] - 0.035)
+        y_range = (table_ll[1] + 0.045, table_ur[1] - 0.045)
+
+        for i in range(num_objects):
             condition = True
+
             while condition:
-                new_point = (randrange(*x_range),randrange(*y_range))
-                condition = (sum( [too_close(new_point,p) for p in centers] ) > 0)
-            centers.append( new_point )
+                new_point = (randrange(*x_range), randrange(*y_range))
+                condition = (sum( [too_close(new_point, p) for p in centers] ) > 0)
+
+            centers.append(new_point)
+            classes.append(choice(class_choices))
+            colors.append(choice(Color.all))
+            offsets.append( (randrange(0.025, 0.035), randrange(0.025, 0.045)) )
+            names.append('%s_%s_%d' % (colors[-1].lower(), classes[-1].lower(), i))
     else:
+        num_objects = 5
+        names = ['green_cup', 'blue_cup', 'pink_cup', 'purple_prism', 'orange_prism']
         centers = [(0.05, 0.9), (0.05, 0.7), (0, 0.55), (-0.3,0.7), (0.3,0.7)]
+        classes = [ObjectClass.CUP, ObjectClass.CUP, ObjectClass.CUP, ObjectClass.PRISM, ObjectClass.PRISM]
+        colors = [Color.GREEN, Color.BLUE, Color.PINK, Color.PURPLE, Color.ORANGE]
+        offsets = [(0.035,0.035), (0.035,0.035), (0.035,0.035), (0.035,0.045), (0.035,0.045)]
 
     table = Landmark('table',
                      RectangleRepresentation(rect=BoundingBox([Vec2(*table_ll), Vec2(*table_ur)])),
                      None,
                      ObjectClass.TABLE)
 
-    obj1 = Landmark('green_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[0][0]-0.035,centers[0][1]-0.035),
-                                                              Vec2(centers[0][0]+0.035,centers[0][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.GREEN)
-
-    obj2 = Landmark('blue_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[1][0]-0.035,centers[1][1]-0.035),
-                                                              Vec2(centers[1][0]+0.035,centers[1][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.BLUE)
-
-    obj3 = Landmark('pink_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[2][0]-0.035,centers[2][1]-0.035),
-                                                              Vec2(centers[2][0]+0.035,centers[2][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.PINK)
-
-    obj4 = Landmark('purple_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[3][0]-0.035,centers[3][1]-0.045),
-                                                              Vec2(centers[3][0]+0.035,centers[3][1]+0.045)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.PRISM,
-                    Color.PURPLE)
-
-    obj5 = Landmark('orange_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[4][0]-0.035,centers[4][1]-0.045),
-                                                              Vec2(centers[4][0]+0.035,centers[4][1]+0.045)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.PRISM,
-                    Color.ORANGE)
-
-    # t_rep = table.to_dict()
     scene.add_landmark(table)
-    # scene.add_landmark(serialize.landmark_from_dict(t_rep))
 
-    for obj in (obj1, obj2, obj3, obj4, obj5):
-        # o_rep = obj.to_dict()
+    for i, (name, center, cls, color, offset) in enumerate( zip(names, centers, classes, colors, offsets) ):
+        obj = Landmark(name,
+                       RectangleRepresentation(rect=BoundingBox([Vec2(center[0]-offset[0], center[1]-offset[1]),
+                                                                 Vec2(center[0]+offset[0], center[1]+offset[1])]), landmarks_to_get=[]),
+                       None, cls, color)
+
         obj.representation.alt_representations = []
         scene.add_landmark(obj)
-        # scene.add_landmark(serialize.landmark_from_dict(o_rep))
 
     return scene, speaker
 
@@ -178,11 +167,41 @@ def read_scenes(dir, normalize=False):
                 infos.append( load_scene(os.path.join(root, name), normalize) )
     return infos
 
+def generate_adios_corpus(num_sentences=10000, num_per_scene=100, min_objects=1, max_objects=7):
+    print 'Generating ADIOS sentence corpus [%d sentences with %d per scene]' % (num_sentences, num_per_scene)
+    f = open('adios_corpus_%f.raw' % time(), 'w')
+
+    for i in range(num_sentences):
+        if (i % num_per_scene) == 0:
+            num_objects = int(random() * (max_objects - min_objects) + min_objects)
+            scene, speaker = construct_training_scene(random=True, num_objects=num_objects)
+            table = scene.landmarks['table'].representation.rect
+            f.flush()
+
+        t_min = table.min_point
+        t_w = table.width
+        t_h = table.height
+
+        # generate a random location and generate a sentence describing it
+        xloc, yloc = random() * t_w + t_min.x, random() * t_h + t_min.y
+        trajector = Landmark('point', PointRepresentation( Vec2(xloc,yloc) ), None, Landmark.POINT)
+        sentence, rel, lmk = speaker.describe(trajector, scene, False, 1)
+
+        # print '* %s #' % sentence
+        f.write('* %s #\n' % sentence)
+
+    f.close()
+
+
 if __name__ == '__main__':
-    print len(read_scenes(sys.argv[1], True))
+    # print len(read_scenes(sys.argv[1], True))
     #scene, speaker = load_scene(sys.argv[1])
+
+    generate_adios_corpus(num_sentences=200000, num_per_scene=2000)
     exit(1)
-    # scene, speaker = construct_training_scene()
+
+
+    scene, speaker = construct_training_scene(random=True, num_objects=7)
 
 #    lmks = [lmk for lmk in scene.landmarks.values() if not lmk.name == 'table']
 #    groups = adapter.adapt(lmks)
@@ -205,8 +224,9 @@ if __name__ == '__main__':
     for i in range(couple * dozen):
         location = Landmark( 'point', PointRepresentation(Vec2(random()*t_w+t_min.x, random()*t_h+t_min.y)), None, Landmark.POINT)
         trajector = location#obj2
-        speaker.describe(trajector, scene, False, 1, step=0.1)
-        # speaker.get_all_meaning_descriptions(trajector, scene, 1)
+        speaker.describe(trajector, scene, visualize=True, max_level=1, step=0.04)
+        # speaker.get_all_meaning_descriptions(trajector, scene, max_level=1)
+
     # location = Vec2(5.68, 5.59)##Vec2(5.3, 5.5)
     # speaker.demo(location, scene)
     # all_desc = speaker.get_all_descriptions(location, scene, 1)

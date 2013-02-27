@@ -8,12 +8,15 @@ from numpy import (
     copy as npcopy,
     exp
 )
+
 import sys
 sys.path.append("..")
 from myrandom import random
 choice = random.choice
 from myrandom import nprandom as random
 # from random import choice
+
+from pprint import pprint
 
 from matplotlib import pyplot as plt
 from itertools import product
@@ -35,13 +38,17 @@ from relation import (
     ContainmentRelationSet,
     OrientationRelationSet,
     Measurement,
-    Degree
+    Degree,
+    ToRelation
 )
 
 from utils import categorical_sample, index_max
 
 from multiprocessing import Process, Pipe
 from itertools import izip
+
+import numpy as np
+# np.seterr(all='raise')
 
 def spawn(f):
     def fun(ppipe, cpipe,x):
@@ -72,18 +79,17 @@ class Speaker(object):
             return self.location
 
     def sample_meaning(self, trajector, scene, max_level=-1):
-
         # scenes = scene.get_child_scenes(trajector) + [scene]
         scenes = [scene]
         all_landmarks = []
 
         for s in scenes:
+            # loop over top level landmarks in the scene,
+            # e.g. table, objects on the table, not parts
+            # like sides, corners, etc.
             for scene_lmk in s.landmarks.values():
-
                 # Don't want to use the trajector as landmark
-                if scene_lmk == trajector:
-                    continue
-
+                if scene_lmk == trajector: continue
                 all_landmarks.append([s, scene_lmk])
 
                 representations = [scene_lmk.representation]
@@ -94,12 +100,8 @@ class Speaker(object):
                         all_landmarks.append([s, lmk])
 
         sceness, landmarks = zip( *all_landmarks )
-
         sampled_landmark, sl_prob, sl_ent, head_on = self.sample_landmark( landmarks, trajector )
-        # print '   ', sampled_landmark, sl_prob, sl_ent
-
         sampled_relation, sr_prob, sr_ent = self.sample_relation( trajector, scene.get_bounding_box(), head_on, sampled_landmark, step=0.1 )
-        # print '   ', sampled_relation, sr_prob, sr_ent
         sampled_relation = sampled_relation( head_on, sampled_landmark, trajector )
 
         return sampled_landmark, sampled_relation, head_on
@@ -139,20 +141,30 @@ class Speaker(object):
         return meaning_probs
 
     def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False, step=0.01):
-
         sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
 
         vec = trajector.representation.middle
         description = language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
-        print str(vec) + ' ; ' + description
+        # print str(vec) + ' ; ' + description
+        # print '* %s #' % description
 
         if visualize: self.visualize(scene, trajector, head_on, sampled_landmark, sampled_relation, description, step)
-        return description, sampled_relation, sampled_landmark
+        return description.strip(), sampled_relation, sampled_landmark
 
     def get_all_meaning_descriptions(self, trajector, scene, sampled_landmark=None, sampled_relation=None, head_on=None, max_level=-1):
         if sampled_landmark is None or sampled_relation is None or head_on is None:
             sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
-        return language_generator.get_all_descriptions(head_on, trajector, sampled_landmark, sampled_relation)
+
+        descriptions = language_generator.get_all_descriptions(head_on, trajector, sampled_landmark, sampled_relation)
+        num_descriptions = len(descriptions)
+        triples = zip(descriptions, [sampled_relation]*num_descriptions, [sampled_landmark]*num_descriptions)
+        vec = trajector.representation.middle
+
+        for t in triples:
+            print str(vec) + ' ; ' + t[0]
+            # print '* %s #' % t[0]
+
+        return triples
 
     def communicate(self, scene, visualize=False, max_level=-1, delimit_chunks=False):
         all_landmarks = []
@@ -330,15 +342,28 @@ class Speaker(object):
         return trajector_prob / (probs.sum() + trajector_prob) if trajector_prob else trajector_prob
 
     def all_landmark_probs(self, landmarks, trajector):
-        epsilon = 0.02
+        # epsilon = 0.02
         distances = []
+
         # for lmk in landmarks:
-        #     if isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector.representation):
-        #         distances.append( 9*epsilon ) # Give some arbitrary weight to the surface you're on, even if no distance
+        #     if isinstance(lmk.representation,SurfaceRepresentation):
+        #          # Give some arbitrary weight to the surface you're on, even if no distance
+        #         if lmk.representation.contains(trajector.representation): distances.append( 9*epsilon )
+        #         else: distances.append(10.0)
+        #     elif isinstance(lmk.representation,RectangleRepresentation):
+        #          # Give some arbitrary weight to the surface you're on, even if no distance
+        #         if lmk.representation.contains(trajector.representation): distances.append( 9*epsilon )
+        #     else:
+        #         distances.append(trajector.distance_to( lmk.representation ))
+
+        # distances = array(distances)
+        max_rect_area = max([lmk.representation.area for lmk in landmarks if isinstance(lmk.representation, RectangleRepresentation)])
 
         distances = array([trajector.distance_to( lmk.representation )
-            if not (isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector.representation))
-            else 9*epsilon for lmk in landmarks])
+                           if not (isinstance(lmk.representation, RectangleRepresentation) and lmk.representation.contains(trajector.representation))
+                           else 2*(lmk.representation.area/max_rect_area) for lmk in landmarks])
+
+
         # distances = array([trajector.distance_to( lmk )
         #     if not (isinstance(lmk.representation,RectangleRepresentation) and lmk.representation.contains(trajector))
         #     else min(poly_to_vec_distance(lmk.representation.get_geometry().to_polygon(), trajector.representation.location),lmk.representation.middle.distance_to(trajector.representation.location))
@@ -346,13 +371,15 @@ class Speaker(object):
         # scores = 1.0/(distances + epsilon)**0.5
         std = .1
         scores = exp( -(distances/std)**2)
-        scores = [0 if isinstance(lmk.representation,SurfaceRepresentation) else score for lmk,score in zip(landmarks,scores)]
+        scores = [0 if isinstance(lmk.representation, SurfaceRepresentation) and not lmk.representation.contains(trajector.representation) else score for lmk,score in zip(landmarks,scores)]
         return scores/sum(scores)
 
     def sample_landmark(self, landmarks, trajector, usebest=False):
         ''' Weight by inverse of distance to landmark center and choose probabilistically  '''
 
         lm_probabilities = self.all_landmark_probs(landmarks, trajector)
+        # pprint( zip(landmarks, lm_probabilities))
+
         if usebest:
             index = index_max(lm_probabilities)
         else:
@@ -427,12 +454,11 @@ class Speaker(object):
     def get_relation_probs_for_points(self, points, landmark, landmark_heatmap, original_landmark_heatmap, perspective):
 
         def instantiate_relations(landmark):
-
             bullshit_trajector = Landmark( None, PointRepresentation( Vec2(0,0) ), None )
             relations = []
             if not isinstance(landmark.representation, SurfaceRepresentation):
                 for rel in DistanceRelationSet.relations:
-                    for dist_class, deg_class in list(product([Measurement.NEAR,Measurement.FAR],Degree.all)):
+                    for dist_class, deg_class in list(product([Measurement.NEAR if rel == ToRelation else Measurement.FAR],Degree.all)):
                         relation = rel( perspective, landmark, bullshit_trajector )
                         relation.measurement.best_distance_class = dist_class
                         relation.measurement.best_degree_class = deg_class
@@ -568,11 +594,16 @@ class Speaker(object):
             if p > 0: ori_rel_scores.append( (p, rel) )
 
         if len(ori_rel_scores) > 1:
+            # at most 2 orientation relations can be true at any time,
+            # e.g. something is to the left and behind something
             assert( len(ori_rel_scores) == 2 )
 
             dists = []
-            for p,rel in ori_rel_scores:
+
+            for p, rel in ori_rel_scores:
                 dists.append( [rel(perspective, landmark, trajector).measurement.distance, p, rel] )
+
+            # TODO: what the hell is going on here?
             dists = sorted(dists)
             dists[0][1] *= dists[0][0] / dists[1][0]
 
@@ -580,9 +611,12 @@ class Speaker(object):
             rel_scores.append(dists[1][1])
             rel_classes.append(dists[0][2])
             rel_classes.append(dists[1][2])
+        elif len(ori_rel_scores) == 1:
+            rel_scores.append(ori_rel_scores[0][0])
+            rel_classes.append(ori_rel_scores[0][1])
 
         rel_scores = array(rel_scores)
-        return rel_scores/sum(rel_scores), rel_classes
+        return rel_scores/rel_scores.sum(), rel_classes
 
     def sample_relation(self, trajector, bounding_box, perspective, landmark, step=0.02, usebest=False):
         """

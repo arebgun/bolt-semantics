@@ -28,6 +28,7 @@ class_to_words = {
     Color.YELLOW:         {'A' : ['yellow']},
     Color.BLACK:          {'A' : ['black']},
     Color.WHITE:          {'A' : ['white']},
+    Color.TEAL:           {'A' : ['teal']},
     Landmark.EDGE:     {'N' : ['edge']},
     Landmark.CORNER:   {'N' : ['corner']},
     Landmark.MIDDLE:   {'N' : ['middle']},
@@ -40,13 +41,13 @@ class_to_words = {
     ToRelation:        {'P' : ['to']},
     # NextToRelation:    {'P' : ['at', 'by']},#['next to', 'at', 'by']},
     OnRelation:        {'P' : ['on']},
-    InFrontRelation:   {'P' : ['in front of'], 'A' : ['front', 'near']},
-    BehindRelation:    {'P' : ['behind'], 'A' : ['back', 'far']},
+    InFrontRelation:   {'P' : ['in front of', 'below'], 'A' : ['front', 'near', 'nearer']},
+    BehindRelation:    {'P' : ['behind', 'above'], 'A' : ['back', 'far', 'farther']},
     LeftRelation:      {'P' : ['to the left of'], 'A' : ['left']},
     RightRelation:     {'P' : ['to the right of'], 'A' : ['right']},
     Degree.NONE:       {'R' : ['']},
-    Degree.SOMEWHAT:   {'R' : ['somewhat']},
-    Degree.VERY:       {'R' : ['very']},
+    Degree.SOMEWHAT:   {'R' : ['somewhat', 'pretty', 'fairly']},
+    Degree.VERY:       {'R' : ['very', 'quite', 'rather']},
     Measurement.NONE:  {'A' : ['']},
     Measurement.FAR:   {'A' : ['far']},
     Measurement.NEAR:  {'A' : ['near', 'close']},
@@ -93,13 +94,21 @@ def get_landmark_description(perspective, landmark, delimit_chunks=False):
     noun = choice(class_to_words[landmark.object_class]['N']) + (' * ' if delimit_chunks else ' ')
     desc = 'the' + (' * ' if delimit_chunks else ' ')
 
-    for option in landmark.ori_relations:
-        desc += choice( class_to_words[option]['A'] ) + (' * ' if delimit_chunks else ' ')
+    ori = color = nounclass = True
+    # do = [ori, color, nounclass]
+    # if random.random() > 0.5:
+    #     do[choice([0,1,2])] = False
+    # ori,color,nounclass = do
 
-    desc += (choice(class_to_words[landmark.color]['A']) + ' ' if landmark.color else '') + noun
+    if ori:
+        for option in landmark.ori_relations:
+            desc += choice( class_to_words[option]['A'] ) + (' * ' if delimit_chunks else ' ')
+
+    desc += (choice(class_to_words[landmark.color]['A']) + ' ' if color and landmark.color else '') + (noun if nounclass else '')
 
     if landmark.parent and landmark.parent.parent_landmark:
         p_desc = get_landmark_description(perspective, landmark.parent.parent_landmark)
+
         if p_desc:
             desc += 'of' + (' * ' if delimit_chunks else ' ') + p_desc
 
@@ -125,7 +134,7 @@ def describe(perspective, trajector, landmark, relation, delimit_chunks=False):
 
 
 def get_all_landmark_descriptions(perspective, trajector, landmark):
-    lists = [['the']]
+    lists = [['the', 'a']]
     lists.extend([class_to_words[option]['A'] for option in landmark.ori_relations])
     lists.append(class_to_words[landmark.color]['A'] if landmark.color else [])
     lists.append(class_to_words[landmark.object_class]['N'])

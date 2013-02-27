@@ -276,7 +276,7 @@ class OrientationRelation(Relation):
         distances = zeros( point_array.shape[0] )
         for i,point in enumerate(point_array):
             distances[i] = self.ori_ray.start.distance_to(self.ori_ray.line.project(point))
-        return self.measurement.any_are_applicable(distances)*applies
+        return self.measurement.are_applicable(distances)*applies
 
     def __hash__(self):
         return hash(self.__class__.__name__ + ' ' + self.measurement.__hash__())

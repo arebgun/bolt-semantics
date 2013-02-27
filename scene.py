@@ -23,6 +23,7 @@ class Scene(object):
                     if lmk1.representation.contains(lmk2.representation): sc.add_landmark(lmk2)
 
                 scenes.append(sc)
+
         return scenes
 
     def get_bounding_box(self):
@@ -30,8 +31,9 @@ class Scene(object):
 
     def fetch_landmark(self, uuid):
         result = None
+
         for landmark in self.landmarks.values():
             result = landmark.fetch_landmark(uuid)
-            if result:
-                break
+            if result: break
+
         return result
