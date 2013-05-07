@@ -21,6 +21,7 @@ from pprint import pprint
 import sys
 import os
 from time import time
+from collapse_raw_data import collapse
 #from configurations import adapter
 
 def randrange(lower,upper):
@@ -169,28 +170,34 @@ def read_scenes(dir, normalize=False):
 
 def generate_adios_corpus(num_sentences=10000, num_per_scene=100, min_objects=1, max_objects=7):
     print 'Generating ADIOS sentence corpus [%d sentences with %d per scene]' % (num_sentences, num_per_scene)
-    f = open('adios_corpus_%f.raw' % time(), 'w')
+    f_name = 'adios_corpus_%f.raw' % time()
+    f = open(f_name, 'w')
 
     for i in range(num_sentences):
         if (i % num_per_scene) == 0:
             num_objects = int(random() * (max_objects - min_objects) + min_objects)
             scene, speaker = construct_training_scene(random=True, num_objects=num_objects)
-            table = scene.landmarks['table'].representation.rect
-            f.flush()
 
-        t_min = table.min_point
-        t_w = table.width
-        t_h = table.height
+            table = scene.landmarks['table'].representation.rect
+            t_min = table.min_point
+            t_w = table.width
+            t_h = table.height
+
+            f.flush()
 
         # generate a random location and generate a sentence describing it
         xloc, yloc = random() * t_w + t_min.x, random() * t_h + t_min.y
         trajector = Landmark('point', PointRepresentation( Vec2(xloc,yloc) ), None, Landmark.POINT)
-        sentence, rel, lmk = speaker.describe(trajector, scene, False, 1)
+        rel_desc, lmk_desc, _, _, _ = speaker.describe_parts(trajector=trajector, scene=scene, max_level=1)
+        sentence = rel_desc.strip() + ' ' + lmk_desc.strip()
 
         # print '* %s #' % sentence
+        f.write('* %s #\n' % lmk_desc)
         f.write('* %s #\n' % sentence)
 
     f.close()
+
+    collapse(f_name)
 
 
 if __name__ == '__main__':

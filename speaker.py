@@ -140,16 +140,26 @@ class Speaker(object):
 
         return meaning_probs
 
-    def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False, step=0.01):
+    def describe_parts(self, trajector, scene, max_level=-1, delimit_chunks=False, step=0.01):
         sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
 
-        vec = trajector.representation.middle
-        description = language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
+        relation_description = language_generator.get_relation_description(sampled_relation, delimit_chunks)
+        landmark_description = language_generator.get_landmark_description(head_on, sampled_landmark, delimit_chunks)
+
+        return relation_description, landmark_description, sampled_relation, sampled_landmark, head_on
+
+    def describe(self, trajector, scene, visualize=False, max_level=-1, delimit_chunks=False, step=0.01):
+        rel_desc, lmk_desc, sampled_rel, sampled_lmk, head_on = self.describe_parts(trajector, scene, max_level, delimit_chunks, step)
+        description = rel_desc.strip() + ' ' + lmk_desc.strip()
+        # sampled_landmark, sampled_relation, head_on = self.sample_meaning(trajector, scene, max_level)
+
+        # description = language_generator.describe(head_on, trajector, sampled_landmark, sampled_relation, delimit_chunks)
+        # vec = trajector.representation.middle
         # print str(vec) + ' ; ' + description
         # print '* %s #' % description
 
-        if visualize: self.visualize(scene, trajector, head_on, sampled_landmark, sampled_relation, description, step)
-        return description.strip(), sampled_relation, sampled_landmark
+        if visualize: self.visualize(scene, trajector, head_on, sampled_lmk, sampled_rel, description, step)
+        return description, sampled_rel, sampled_lmk
 
     def get_all_meaning_descriptions(self, trajector, scene, sampled_landmark=None, sampled_relation=None, head_on=None, max_level=-1):
         if sampled_landmark is None or sampled_relation is None or head_on is None:

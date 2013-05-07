@@ -1,14 +1,22 @@
-from relation import *
-# from random import choice
+from relation import (
+    ToRelation,
+    FromRelation,
+    OnRelation,
+    InFrontRelation,
+    BehindRelation,
+    LeftRelation,
+    RightRelation,
+    Degree,
+    Measurement
+)
+
 import sys
 sys.path.append("..")
 from myrandom import random
 choice = random.choice
+
 from landmark import Landmark, ObjectClass, Color
 from itertools import product
-
-# point_words = ['bottle', 'cup', 'computer', 'laptop', 'keyboard', 'book', 'box', 'monitor',
-#                'disc', 'CD', 'camera', 'lens', 'motor', 'screwdriver', 'pen', 'pencil']
 
 class_to_words = {
     ObjectClass.TABLE:    {'N' : ['table']},
