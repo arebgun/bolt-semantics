@@ -20,6 +20,9 @@ import json
 from pprint import pprint
 import sys
 import os
+
+import matplotlib.image as mpimg
+
 #from configurations import adapter
 
 def randrange(lower,upper):
@@ -61,6 +64,7 @@ def load_scene(file, normalize=False):
     width = t_max.x - t_min.x
     height = t_max.y - t_min.y
     if normalize: norm_factor = width if width >= height else height
+    else: norm_factor = 1
 
     t_min = Vec2(t_min.x / norm_factor, t_min.y / norm_factor)
     t_max = Vec2(t_max.x / norm_factor, t_max.y / norm_factor)
@@ -171,12 +175,20 @@ def construct_training_scene(random=False):
 
     return scene, speaker
 
-def read_scenes(dir, normalize=False):
+def read_scenes(dir, normalize=False, image=False):
     infos = []
     for root, dirs, files in os.walk(dir): # Walk directory tree
+        scene_info = []
         for name in files:
+            if image and '.png' in name:
+                img=mpimg.imread(os.path.join(root, name))
+                scene_info.append(img)
             if '.json' in name:
-                infos.append( load_scene(os.path.join(root, name), normalize) )
+                scene, speaker = load_scene(os.path.join(root, name), normalize)
+                scene_info.insert(0,scene)
+                scene_info.insert(1,speaker)
+        if scene_info:
+            infos.append(scene_info)
     return infos
 
 if __name__ == '__main__':

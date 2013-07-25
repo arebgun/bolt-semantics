@@ -1,4 +1,6 @@
 import json
+import sys
+sys.path.insert(1,"..")
 from planar import Vec2
 from planar import BoundingBox
 from planar import Polygon
@@ -59,7 +61,16 @@ class AbstractRepresentation(object):
         else:
             return self.parent_landmark.parent.project_point(point)
 
+    def project_points(self, points):
+        if self.parent_landmark is None or self.parent_landmark.parent is None:
+            return self.my_project_points(points)
+        else:
+            return self.parent_landmark.parent.project_points(points)
+
     def my_project_point(self, point):
+        raise NotImplementedError
+
+    def my_project_points(self, points):
         raise NotImplementedError
 
     def distance_to(self, rep):
@@ -80,6 +91,9 @@ class AbstractRepresentation(object):
         raise NotImplementedError
 
     def contains_point(self, xy):
+        raise NotImplementedError
+
+    def contains_points(self, xsys):
         raise NotImplementedError
 
 class PointRepresentation(AbstractRepresentation):
@@ -122,6 +136,9 @@ class PointRepresentation(AbstractRepresentation):
     def distance_to_point(self, xy):
         return self.location.distance_to( xy )
 
+    def distance_to_points(self, xsys):
+        return self.location.distance_to_points( xsys )
+
     def contains(self, other):
         ''' If PointRepresentation return True if approx. equal.
             Return False if any other representation. '''
@@ -130,6 +147,9 @@ class PointRepresentation(AbstractRepresentation):
 
     def contains_point(self, xy):
         return self.location.almost_equals(xy)
+
+    def contains_points(self, xsys):
+        return self.location.almost_equals_points(xsys)
 
     def get_points(self):
         return [self.location]
@@ -156,7 +176,7 @@ class LineRepresentation(AbstractRepresentation):
         if ratio is None or ratio >= self.ratio_limit:
             self.landmarks = {
                 'start':  Landmark('start',  PointRepresentation(self.line.start), self, Landmark.END),
-                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.MIDDLE),
+                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.MIDDLE+Landmark.POINT),
                 'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.END),
             }
         else:
@@ -186,6 +206,9 @@ class LineRepresentation(AbstractRepresentation):
     def my_project_point(self, point):
         return self.line.project(point)
 
+    def my_project_points(self, points):
+        return self.line.project_points(points)
+
     def distance_to(self, rep):
         geo = rep.get_geometry()
         if isinstance(geo,Vec2):
@@ -200,6 +223,9 @@ class LineRepresentation(AbstractRepresentation):
     def distance_to_point(self, xy):
         return self.line.distance_to( xy )
 
+    def distance_to_points(self, xsys):
+        return self.line.distance_to_points( xsys )
+
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
 
@@ -212,6 +238,9 @@ class LineRepresentation(AbstractRepresentation):
 
     def contains_point(self, xy):
         return self.line.contains_point( xy )
+
+    def contains_points(self, xsys):
+        return self.line.contains_points( xsys )
 
     def get_geometry(self):
         return self.line
@@ -230,7 +259,7 @@ class CircleRepresentation(AbstractRepresentation):
         self.alt_representations = [PointRepresentation(self.middle, self)]
 
         self.landmarks = {
-            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
+            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE+Landmark.POINT)
         }
 
     @classmethod
@@ -252,6 +281,9 @@ class CircleRepresentation(AbstractRepresentation):
     def my_project_point(self, point):
         return point
 
+    def my_project_points(self, points):
+        return points
+
     def distance_to(self, rep):
         geo = rep.get_geometry()
         if isinstance(geo,Vec2):
@@ -269,6 +301,9 @@ class CircleRepresentation(AbstractRepresentation):
     def distance_to_point(self, xy):
         return self.circ.distance_to( xy )
 
+    def distance_to_points(self, xsys):
+        return self.circ.distance_to_points( xsys )
+
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
@@ -284,6 +319,9 @@ class CircleRepresentation(AbstractRepresentation):
 
     def contains_point(self, xy):
         return self.circ.contains_point( xy )
+
+    def contains_points(self, xsys):
+        return self.circ.contains_points( xsys )
 
     def get_geometry(self):
         return self.circ
@@ -319,15 +357,15 @@ class RectangleRepresentation(AbstractRepresentation):
 
         min_dimension = min(self.rect.height,self.rect.width)
         landmark_constructors = {
-                'll_corner': '''Landmark('ll_corner', PointRepresentation(self.rect.min_point), self, Landmark.CORNER)''',
-                'ur_corner': '''Landmark('ur_corner', PointRepresentation(self.rect.max_point), self, Landmark.CORNER)''',
-                'lr_corner': '''Landmark('lr_corner', PointRepresentation(lrc), self, Landmark.CORNER)''',
-                'ul_corner': '''Landmark('ul_corner', PointRepresentation(ulc), self, Landmark.CORNER)''',
-                'middle':    '''Landmark('middle',    PointRepresentation(self.rect.center), self, Landmark.MIDDLE)''',
-                'l_edge_surf':    '''Landmark('l_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([self.rect.min_point, ulc])), self, Landmark.EDGE)''',
-                'r_edge':    '''Landmark('r_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([lrc, self.rect.max_point])), self, Landmark.EDGE)''',
-                'n_edge':    '''Landmark('n_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([self.rect.min_point, lrc])), self, Landmark.EDGE)''',
-                'f_edge':    '''Landmark('f_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([ulc, self.rect.max_point])), self, Landmark.EDGE)''',
+                'll_corner': '''Landmark('ll_corner', PointRepresentation(self.rect.min_point), self, Landmark.CORNER+Landmark.POINT)''',
+                'ur_corner': '''Landmark('ur_corner', PointRepresentation(self.rect.max_point), self, Landmark.CORNER+Landmark.POINT)''',
+                'lr_corner': '''Landmark('lr_corner', PointRepresentation(lrc), self, Landmark.CORNER+Landmark.POINT)''',
+                'ul_corner': '''Landmark('ul_corner', PointRepresentation(ulc), self, Landmark.CORNER+Landmark.POINT)''',
+                'middle':    '''Landmark('middle',    PointRepresentation(self.rect.center), self, Landmark.MIDDLE+Landmark.POINT)''',
+                'l_edge_surf':    '''Landmark('l_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([self.rect.min_point, ulc])), self, Landmark.EDGE+Landmark.LINE)''',
+                'r_edge':    '''Landmark('r_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([lrc, self.rect.max_point])), self, Landmark.EDGE+Landmark.LINE)''',
+                'n_edge':    '''Landmark('n_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([self.rect.min_point, lrc])), self, Landmark.EDGE+Landmark.LINE)''',
+                'f_edge':    '''Landmark('f_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([ulc, self.rect.max_point])), self, Landmark.EDGE+Landmark.LINE)''',
 
                 'l_surf':    '''Landmark('l_surf',    SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                        Vec2(rect.min_point.x+rect.width/2.0,
@@ -353,33 +391,33 @@ class RectangleRepresentation(AbstractRepresentation):
                 'm_surf':    '''Landmark('m_surf',    SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x+rect.width/4.0,
                                                                                             rect.min_point.y+rect.height/4.0),
                                                                                        Vec2(rect.max_point.x-rect.width/4.0,
-                                                                                            rect.max_point.y-rect.height/4.0)])), self, Landmark.MIDDLE)''',
+                                                                                            rect.max_point.y-rect.height/4.0)])), self, Landmark.MIDDLE+Landmark.SURFACE)''',
                 'll_corner_surf': '''Landmark('ll_corner_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                     Vec2(rect.min_point.x+min_dimension/4.0,
-                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER)''',
+                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER+Landmark.SURFACE)''',
                 'ur_corner_surf': '''Landmark('ur_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/4.0,
                                                                                                          rect.max_point.y-min_dimension/4.0),
-                                                                                                    rect.max_point])), self, Landmark.CORNER)''',
+                                                                                                    rect.max_point])), self, Landmark.CORNER+Landmark.SURFACE)''',
                 'lr_corner_surf': '''Landmark('lr_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/4.0,
                                                                                                          rect.min_point.y),
-                                                                                                    Vec2(rect.max_point.x,
-                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER)''',
+                                                                                                    Vec2(rect.min_point.x,
+                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER+Landmark.SURFACE)''',
                 'ul_corner_surf': '''Landmark('ul_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x,
                                                                                                          rect.max_point.y-min_dimension/4.0),
                                                                                                     Vec2(rect.min_point.x+min_dimension/4.0,
-                                                                                                         rect.max_point.y)])), self, Landmark.CORNER)''',
+                                                                                                         rect.max_point.y)])), self, Landmark.CORNER+Landmark.SURFACE)''',
                 'l_edge_surf':    '''Landmark('l_edge_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                  Vec2(rect.min_point.x+min_dimension/8.0,
-                                                                                                      rect.max_point.y)])), self, Landmark.EDGE)''',
+                                                                                                      rect.max_point.y)])), self, Landmark.EDGE+Landmark.SURFACE)''',
                 'r_edge_surf':    '''Landmark('r_edge_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/8.0,
                                                                                                       rect.min_point.y),
-                                                                                                 rect.max_point])), self, Landmark.EDGE)''',
+                                                                                                 rect.max_point])), self, Landmark.EDGE+Landmark.SURFACE)''',
                 'n_edge_surf':    '''Landmark('n_edge_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                  Vec2(rect.max_point.x,
-                                                                                                      rect.min_point.y+min_dimension/8.0)])), self, Landmark.EDGE)''',
+                                                                                                      rect.min_point.y+min_dimension/8.0)])), self, Landmark.EDGE+Landmark.SURFACE)''',
                 'f_edge_surf':    '''Landmark('f_edge_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x,
                                                                                                       rect.max_point.y-min_dimension/8.0),
-                                                                                                 rect.max_point])), self, Landmark.EDGE)''',
+                                                                                                 rect.max_point])), self, Landmark.EDGE+Landmark.SURFACE)''',
         }
 
         self.landmarks = {}
@@ -409,14 +447,39 @@ class RectangleRepresentation(AbstractRepresentation):
         if self.contains_point( point ):
             return point
         else:
-            edges = poly_to_edges(self.rect.to_polygon())
-            min_dist = float('inf')
-            for edge in edges:
-                dist = edge.distance_to(point)
-                if dist < min_dist:
-                    min_dist = dist
-                    closest = edge
-            return closest.project(point)
+            # edges = poly_to_edges(self.rect.to_polygon())
+            # min_dist = float('inf')
+            # for edge in edges:
+            #     dist = edge.distance_to(point)
+            #     if dist < min_dist:
+            #         min_dist = dist
+            #         closest = edge
+            # return closest.project(point)
+            return self.rect.project(point)
+
+
+    def my_project_points(self, points):
+        # edges = poly_to_edges(self.rect.to_polygon())
+        # min_dists = np.empty(len(points))
+        # min_dists[:] = np.inf
+        # closests = np.empty(len(points))
+        # closests[:] = np.inf
+        # for i,edge in enumerate(edges):
+        #     dists = edge.distance_to_points(points)
+        #     min_dists[ dists < min_dists ] = dists
+        #     closests[ dists < min_dists ] = i
+        # projected = np.empty(points.shape)
+        # for i,edge in enumerate(edges):
+        #     w = closests == i
+        #     projected[ w,: ] = edge.project_points(points[w,:])
+        # contains = self.contains_points( points )
+        # projected[contains] = points[contains]
+
+        # return projected
+        projected = np.array(points)
+        notcontains = np.logical_not(self.contains_points(points))
+        projected[notcontains] = self.rect.project_points(points[notcontains,:])
+        return projected
 
 
     def distance_to(self, rep):
@@ -433,6 +496,9 @@ class RectangleRepresentation(AbstractRepresentation):
     def distance_to_point(self, xy):
         return poly_to_vec_distance( self.rect.to_polygon(), xy )
 
+    def distance_to_points(self, xsys):
+        return self.rect.distance_to_points( xsys )
+
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
@@ -446,6 +512,9 @@ class RectangleRepresentation(AbstractRepresentation):
 
     def contains_point(self, xy):
         return self.rect.contains_point( xy )
+
+    def contains_points(self, xsys):
+        return self.rect.contains_points( xsys )
 
     def get_geometry(self):
         return self.rect
@@ -467,7 +536,7 @@ class PolygonRepresentation(AbstractRepresentation):
         self.num_dim = 2
         self.middle = poly.centroid
         self.landmarks = {
-            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
+            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE+Landmark.POINT)
         }
 
     @classmethod
@@ -504,6 +573,9 @@ class PolygonRepresentation(AbstractRepresentation):
     def distance_to_point(self, xy):
         return poly_to_vec_distance( self.poly, xy )
 
+    def distance_to_points(self, xsys):
+        return self.poly.distance_to_points( xsys )
+
     def contains(self, other):
         if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
@@ -517,6 +589,9 @@ class PolygonRepresentation(AbstractRepresentation):
 
     def contains_point(self, xy):
         return self.poly.contains_point( xy )
+
+    def contains_points(self, xsys):
+        return self.poly.contains_points( xsys )
 
     def get_geometry(self):
         return self.poly

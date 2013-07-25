@@ -2,7 +2,7 @@ from uuid import uuid4
 import json
 
 import sys
-sys.path.append("..")
+sys.path.insert(1,"..")
 from myrandom import random
 choice = random.choice
 
@@ -45,6 +45,7 @@ class Landmark(object):
     SIDE = 'SIDE'
     LINE = 'LINE'
     POINT = 'POINT'
+    SURFACE = 'SURFACE'
 
     all = [EDGE,CORNER,MIDDLE,HALF,END,SIDE,LINE,POINT]
 
@@ -61,9 +62,6 @@ class Landmark(object):
 
         for alt_repr in representation.get_alt_representations():
             alt_repr.parent_landmark = self
-
-    def __repr__(self):
-        return self.name
 
     def to_dict(self):
         return {
@@ -102,10 +100,19 @@ class Landmark(object):
         tpd = top_parent.distance_to_point(p)
         if self.parent: p = self.parent.project_point(p)
         d = self.representation.distance_to_point(p)
-        # print self, self.parent, top_parent, p, tpd, d
         d = np.sqrt( d*d + tpd*tpd )
-
         return d
+
+    def distance_to_points(self, ps):
+        top_parent = self.get_top_parent()
+        tpds = top_parent.distance_to_points(ps)
+
+        if self.parent:
+            ps = self.parent.project_points(ps)
+
+        ds = self.representation.distance_to_points(ps)
+        ds = np.sqrt( ds**2 + tpds**2)
+        return ds
 
     def get_top_parent(self):
         top = self.parent
@@ -132,5 +139,6 @@ class Landmark(object):
                         return result
         return result
 
-
+    def __repr__(self):
+        return self.name+' '+str(self.color)+' '+str(self.object_class)
 

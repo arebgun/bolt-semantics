@@ -29,8 +29,14 @@ class_to_words = {
     Color.BLACK:          {'A' : ['black']},
     Color.WHITE:          {'A' : ['white']},
     Landmark.EDGE:     {'N' : ['edge']},
+    Landmark.EDGE+Landmark.LINE:     {'N' : ['edge']},
+    Landmark.EDGE+Landmark.SURFACE:     {'N' : ['edge']},
     Landmark.CORNER:   {'N' : ['corner']},
+    Landmark.CORNER+Landmark.POINT:   {'N' : ['corner']},
+    Landmark.CORNER+Landmark.SURFACE:   {'N' : ['corner']},
     Landmark.MIDDLE:   {'N' : ['middle']},
+    Landmark.MIDDLE+Landmark.POINT:   {'N' : ['middle']},
+    Landmark.MIDDLE+Landmark.SURFACE:   {'N' : ['middle']},
     Landmark.HALF:     {'N' : ['half']},
     Landmark.END:      {'N' : ['end']},
     Landmark.SIDE:     {'N' : ['side']},
@@ -49,7 +55,7 @@ class_to_words = {
     Degree.VERY:       {'R' : ['very']},
     Measurement.NONE:  {'A' : ['']},
     Measurement.FAR:   {'A' : ['far']},
-    Measurement.NEAR:  {'A' : ['near', 'close','next']},
+    Measurement.NEAR:  {'A' : ['near', 'close']},
 }
 
 phrase_to_class = {

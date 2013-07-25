@@ -1,15 +1,17 @@
 import sys
-sys.path.append("..")
+sys.path.insert(1,"..")
 from myrandom import random
 choice = random.choice
 
 from myrandom import nprandom as random
-from numpy import array, zeros, maximum
+from numpy import array, zeros, maximum, logical_and as land, logical_not as lnot
 from scipy.stats import norm
 from planar import Vec2, Affine
 from planar.line import LineSegment, Ray
 from representation import PointRepresentation, SurfaceRepresentation
 from itertools import product
+
+from numpy.testing import assert_allclose
 
 
 class Relation(object):
@@ -149,8 +151,10 @@ class DistanceRelation(Relation):
         if isinstance(self.landmark.representation, SurfaceRepresentation):
             return distances #return zeros
 
-        for i,point in enumerate(point_array):
-            distances[i] = self.landmark.distance_to_point(point)
+        # for i,point in enumerate(point_array):
+        #     distances[i] = self.landmark.distance_to_point(point)
+
+        distances = self.landmark.distance_to_points(point_array)
         return self.measurement.are_applicable(distances)
 
     def __hash__(self):
@@ -161,9 +165,11 @@ class DistanceRelation(Relation):
 
     @classmethod
     def any_are_applicable(cls, perspective, landmark, point_array):
-        distances = zeros( point_array.shape[0] )
-        for i,point in enumerate(point_array):
-            distances[i] = landmark.distance_to_point(point)
+        # distances = zeros( point_array.shape[0] )
+        # for i,point in enumerate(point_array):
+        #     distances[i] = landmark.distance_to_point(point)
+
+        distances = landmark.distance_to_points(point_array)
         return Measurement.any_are_applicable(distances, required=True)
 
 
@@ -198,7 +204,9 @@ class ContainmentRelation(Relation):
         return float(self.landmark.representation.contains( self.trajector.representation ))
 
     def are_applicable(self, point_array):
-        return array( [float(self.landmark.representation.contains_point( point )) for point in point_array] )
+        # contains = array( [float(self.landmark.representation.contains_point( point )) for point in point_array] )
+        contains = array(self.landmark.representation.contains_points(point_array),dtype=float)
+        return contains
 
     def __hash__(self):
         return hash(self.__class__.__name__)
@@ -208,7 +216,9 @@ class ContainmentRelation(Relation):
 
     @classmethod
     def any_are_applicable(cls, perspective, landmark, point_array):
-        return array( [float(landmark.representation.contains_point( point )) for point in point_array] )
+        # contains = array( [float(landmark.representation.contains_point( point )) for point in point_array] )
+        contains = landmark.representation.contains_points(point_array)
+        return contains
 
 class OnRelation(ContainmentRelation):
     def __init__(self, perspective, landmark, trajector):
@@ -268,14 +278,18 @@ class OrientationRelation(Relation):
             return 0.0
 
     def are_applicable(self, point_array):
-        applies = zeros( point_array.shape[0] )
-        for i,point in enumerate(point_array):
-            point = self.ori_ray.line.project(point)
-            applies[i] = self.ori_ray.contains_point(point) and not \
-                         self.landmark.representation.contains_point(point)
-        distances = zeros( point_array.shape[0] )
-        for i,point in enumerate(point_array):
-            distances[i] = self.ori_ray.start.distance_to(self.ori_ray.line.project(point))
+        # applies = zeros( point_array.shape[0] )
+        # for i,point in enumerate(point_array):
+        #     point = self.ori_ray.line.project(point)
+        #     applies[i] = self.ori_ray.contains_point(point) and not \
+        #                  self.landmark.representation.contains_point(point)
+        projected_array = self.ori_ray.line.project_points(point_array)
+        applies = array(land( self.ori_ray.contains_points(projected_array),
+                         lnot( self.landmark.representation.contains_points(projected_array)) ), dtype=float)
+        # distances = zeros( point_array.shape[0] )
+        # for i,point in enumerate(point_array):
+        #     distances[i] = self.ori_ray.start.distance_to(self.ori_ray.line.project(point))
+        distances = self.ori_ray.start.distance_to_points(self.ori_ray.line.project_points(point_array))
         return self.measurement.are_applicable(distances)*applies
 
     def __hash__(self):
@@ -287,9 +301,10 @@ class OrientationRelation(Relation):
     @classmethod
     def any_are_applicable(cls, perspective, landmark, point_array):
         ori_ray = cls.get_orientation_ray(perspective, landmark)
-        distances = zeros( point_array.shape[0] )
-        for i,point in enumerate(point_array):
-            distances[i] = ori_ray.start.distance_to(ori_ray.line.project(point))
+        # distances = zeros( point_array.shape[0] )
+        # for i,point in enumerate(point_array):
+        #     distances[i] = ori_ray.start.distance_to(ori_ray.line.project(point))
+        distances = ori_ray.start.distance_to_points(ori_ray.line.project_points(point_array))
         return Measurement.any_are_applicable(distances)
 
 
@@ -369,7 +384,7 @@ class ContainmentRelationSet(RelationSet):
 
 class OrientationRelationSet(RelationSet):
 
-    relations = [InFrontRelation, BehindRelation, LeftRelation, RightRelation]
+    relations = [InFrontRelation, LeftRelation, RightRelation, BehindRelation]
 
     @staticmethod
     def sample_landmark(landmarks, trajector):
