@@ -9,6 +9,7 @@ from myrandom import random
 choice = random.choice
 from landmark import Landmark, ObjectClass, Color
 from itertools import product
+from copy import deepcopy
 from utils import categorical_sample
 from new_relation import *
 
@@ -91,6 +92,7 @@ class Teacher(object):
 
     scene_sorted_meaning_lists = {}
     scene_object_meaning_applicabilities = {}
+    scene_object_meaning_scores = {}
 
     def __init__(self, location):
         self.set_location(location)
@@ -109,54 +111,74 @@ class Teacher(object):
 
     def get_sorted_meaning_lists(self, scene):
 
-        if scene in self.scene_sorted_meaning_lists:
-            return self.scene_sorted_meaning_lists[scene]
+        if scene not in self.scene_sorted_meaning_lists:
 
-        landmarks = self.get_landmarks(scene)
-        object_landmarks = self.get_object_landmarks(scene)
+            landmarks = self.get_landmarks(scene)
+            object_landmarks = self.get_object_landmarks(scene)
 
-        object_meaning_applicabilities = defaultdict(dict)
+            object_meaning_applicabilities = defaultdict(dict)
+            self.scene_object_meaning_applicabilities[scene] = defaultdict(dict)
 
-        # for object1 in object_landmarks:
-        #     for object2 in object_landmarks:
-        #         print object1, object2, \
-        #                 object1.distance_to(object2.representation)
+            # for object1 in object_landmarks:
+            #     for object2 in object_landmarks:
+            #         print object1, object2, \
+            #                 object1.distance_to(object2.representation)
 
 
-        for object_landmark in object_landmarks:
-            different_landmarks = landmarks[:]
-            different_landmarks.remove(object_landmark)
-            for landmark in different_landmarks:
-                perspective = self.get_head_on_viewpoint(landmark)
-                for relation in self.relation_set:
-                    sem = Semantic(perspective, relation, landmark)
-                    app = relation.applicability(perspective, 
-                                                 landmark, 
-                                                 object_landmark)
-                    object_meaning_applicabilities[sem][object_landmark] = app
+            for object_landmark in object_landmarks:
+                different_landmarks = landmarks[:]
+                different_landmarks.remove(object_landmark)
+                for landmark in different_landmarks:
+                    perspective = self.get_head_on_viewpoint(landmark)
+                    for relation in self.relation_set:
+                        sem = Semantic(perspective, relation, landmark)
+                        app = relation.applicability(perspective, 
+                                                     landmark, 
+                                                     object_landmark)
+                        object_meaning_applicabilities[sem][object_landmark]=app
+                        self.scene_object_meaning_applicabilities\
+                        [scene][sem][object_landmark] = app
 
-        self.scene_object_meaning_applicabilities[scene] = \
-            object_meaning_applicabilities
+            for meaning_dict in object_meaning_applicabilities.values():
+                total = sum( meaning_dict.values() )
+                if total != 0:
+                    for obj_lmk in meaning_dict.keys():
+                        meaning_dict[obj_lmk] *= meaning_dict[obj_lmk]/total
 
-        for meaning_dict in object_meaning_applicabilities.values():
-            total = sum( meaning_dict.values() )
-            if total != 0:
-                for obj_lmk in meaning_dict.keys():
-                    meaning_dict[obj_lmk] *= meaning_dict[obj_lmk]/total
+            sorted_meaning_lists = {}
 
-        sorted_meaning_lists = {}
+            for m in object_meaning_applicabilities.keys():
+                for obj_lmk in object_meaning_applicabilities[m].keys():
+                    if obj_lmk not in sorted_meaning_lists:
+                        sorted_meaning_lists[obj_lmk] = []
+                    sorted_meaning_lists[obj_lmk].append( 
+                        (object_meaning_applicabilities[m][obj_lmk], m) )
+            for obj_lmk in sorted_meaning_lists.keys():
+                sorted_meaning_lists[obj_lmk].sort(reverse=True)
 
-        for m in object_meaning_applicabilities.keys():
-            for obj_lmk in object_meaning_applicabilities[m].keys():
-                if obj_lmk not in sorted_meaning_lists:
-                    sorted_meaning_lists[obj_lmk] = []
-                sorted_meaning_lists[obj_lmk].append( 
-                    (object_meaning_applicabilities[m][obj_lmk], m) )
-        for obj_lmk in sorted_meaning_lists.keys():
-            sorted_meaning_lists[obj_lmk].sort(reverse=True)
+            self.scene_sorted_meaning_lists[scene] = sorted_meaning_lists
+            self.scene_object_meaning_scores[scene] = \
+                                                object_meaning_applicabilities
 
-        self.scene_sorted_meaning_lists[scene] = sorted_meaning_lists
-        return sorted_meaning_lists
+        return self.scene_sorted_meaning_lists[scene]
+
+    def get_applicability(self, scene, relation, landmark, trajector):
+        self.get_sorted_meaning_lists(scene)
+        applicabilities = self.scene_object_meaning_applicabilities[scene]
+        perspective = self.get_head_on_viewpoint(landmark)
+        sem = Semantic(perspective, relation, landmark)
+        # print 'teacher.py:170',sem
+        # print 'teacher.py:171',applicabilities[sem]
+        return applicabilities[sem][trajector]
+
+    def get_score(self, scene, relation, landmark, trajector):
+        self.get_sorted_meaning_lists(scene)
+        scores = self.scene_object_meaning_scores[scene]
+        perspective = self.get_head_on_viewpoint(landmark)
+        sem = Semantic(perspective, relation, landmark)
+        # print 'teacher.py:179',sem
+        # print 'teacher.py:180',scores[sem]
+        return scores[sem][trajector]
 
     def sample_trajector(self, scene):
         obj_lmks = [lmk for lmk in scene.landmarks.values() 
@@ -168,7 +190,8 @@ class Teacher(object):
         sorted_meaning_list = self.get_sorted_meaning_lists(scene)[trajector]
         scores, meanings = zip(*sorted_meaning_list)
 
-        meaning = meanings[ categorical_sample(np.array(scores)) ]
+        sample_index = categorical_sample(np.array(scores))
+        sampled_meaning = meanings[ sample_index ]
 
         # pp.pprint(meaning)
         # d = self.scene_object_meaning_applicabilities[scene][meaning]
@@ -182,7 +205,7 @@ class Teacher(object):
         # semantic_applicabilities = sorted(semantic_applicabilities)
         # applicabilities, semantics = zip(*semantic_applicabilities)
         
-        return meaning
+        return sampled_meaning
 
     @staticmethod
     def get_landmarks(scene):
