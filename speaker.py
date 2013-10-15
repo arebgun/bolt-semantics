@@ -380,7 +380,7 @@ class Speaker(object):
         #     for lmk in landmarks])
         # scores = 1.0/(distances + epsilon)**0.5
         std = .1
-        scores = exp( -(distances/std)**2)
+        scores = exp( -(distances/std)**1.2)
         scores = [0 if isinstance(lmk.representation, SurfaceRepresentation) and not lmk.representation.contains(trajector.representation) else score for lmk,score in zip(landmarks,scores)]
         return scores/sum(scores)
 
@@ -414,7 +414,7 @@ class Speaker(object):
             #     for point in points])
             # scores = 1.0/(distances + epsilon)**0.5
             std = .1
-            scores = exp( -(distances/std)**2)
+            scores = exp( -(distances/std)**1.2)
             # if scores.sum() != 0:
             # print landmark, scores.sum(), max(scores)
             return scores/scores.sum()

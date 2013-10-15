@@ -204,8 +204,8 @@ if __name__ == '__main__':
     # print len(read_scenes(sys.argv[1], True))
     #scene, speaker = load_scene(sys.argv[1])
 
-    generate_adios_corpus(num_sentences=200000, num_per_scene=2000)
-    exit(1)
+    # generate_adios_corpus(num_sentences=200000, num_per_scene=2000)
+    # exit(1)
 
 
     scene, speaker = construct_training_scene(random=True, num_objects=7)
