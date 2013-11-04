@@ -63,6 +63,12 @@ class Landmark(object):
         for alt_repr in representation.get_alt_representations():
             alt_repr.parent_landmark = self
 
+    def get_parent_landmark(self):
+        if self.parent is None:
+            return None
+        else:
+            return self.parent.parent_landmark
+
     def to_dict(self):
         return {
             'name': self.name,
@@ -81,6 +87,14 @@ class Landmark(object):
 
     def get_primary_axes(self, perspective=None):
         return self.get_top_parent().get_primary_axes()
+
+    def contains(self, other):
+        return self.representation.contains(other.representation)
+
+    def angle_between(self, viewpoint, other):
+        othervec = other.representation.middle - self.representation.middle
+        frontvec = viewpoint - self.representation.middle
+        return othervec.angle_to(frontvec)
 
     def distance_to(self, rep):
         top_parent = self.get_top_parent()

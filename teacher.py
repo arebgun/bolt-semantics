@@ -8,10 +8,12 @@ sys.path.insert(1,"..")
 from myrandom import random
 choice = random.choice
 from landmark import Landmark, ObjectClass, Color
+from representation import PointRepresentation
 from itertools import product
 from copy import deepcopy
 from utils import categorical_sample
-from new_relation import *
+# from new_relation import *
+from intermediate_relations import *
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -129,15 +131,24 @@ class Teacher(object):
                 different_landmarks = landmarks[:]
                 different_landmarks.remove(object_landmark)
                 for landmark in different_landmarks:
+                    # print 'location', self.location
+                    # print 'center', landmark.representation.middle
                     perspective = self.get_head_on_viewpoint(landmark)
+                    # print 'perspective', perspective
                     for relation in self.relation_set:
                         sem = Semantic(perspective, relation, landmark)
                         app = relation.applicability(perspective, 
                                                      landmark, 
                                                      object_landmark)
+                        # print 'trajector:',object_landmark
+                        # print 'landmark:',landmark
+                        # print 'relation:',relation
+                        # print 'applicability:', app
+                        # print
                         object_meaning_applicabilities[sem][object_landmark]=app
                         self.scene_object_meaning_applicabilities\
                         [scene][sem][object_landmark] = app
+                    # raw_input()
 
             for meaning_dict in object_meaning_applicabilities.values():
                 total = sum( meaning_dict.values() )
@@ -237,7 +248,7 @@ class Teacher(object):
                 options = [type(rel) for rel in ori_relations
                            if rel.applicability(perspective, 
                                                 middle_lmk,
-                                                landmark)]
+                                                landmark) > 0.5]
 
                 # par_lmk = landmark.parent.parent_landmark
                 # if par_lmk.parent and par_lmk.parent.parent_landmark:

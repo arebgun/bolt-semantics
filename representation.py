@@ -96,6 +96,9 @@ class AbstractRepresentation(object):
     def contains_points(self, xsys):
         raise NotImplementedError
 
+    def overlap_fraction(self, other):
+        raise NotImplementedError
+
 class PointRepresentation(AbstractRepresentation):
     def __init__(self, point, alt_of=None):
         super(PointRepresentation, self).__init__(alt_of)
@@ -499,22 +502,42 @@ class RectangleRepresentation(AbstractRepresentation):
     def distance_to_points(self, xsys):
         return self.rect.distance_to_points( xsys )
 
+    # def contains(self, other):
+    #     if other.num_dim > self.num_dim: return False
+    #     if other.num_dim == 0:
+    #         return self.rect.contains_point(other.location)
+    #     if other.num_dim == 1:
+    #         return self.rect.contains_point(other.line.start) and self.rect.contains_point(other.line.end)
+    #     if other.num_dim == 2:
+    #         for p in other.get_points():
+    #             if not self.rect.contains_point(p): return False
+    #         return True
+
     def contains(self, other):
-        if other.num_dim > self.num_dim: return False
+    #     if other.num_dim > self.num_dim: return False
         if other.num_dim == 0:
             return self.rect.contains_point(other.location)
         if other.num_dim == 1:
-            return self.rect.contains_point(other.line.start) and self.rect.contains_point(other.line.end)
+            return self.rect.contains_point(other.line.start) and \
+                   self.rect.contains_point(other.line.end)
         if other.num_dim == 2:
-            for p in other.get_points():
-                if not self.rect.contains_point(p): return False
-            return True
+            return self.rect.overlap_with_box(other.rect)
 
     def contains_point(self, xy):
         return self.rect.contains_point( xy )
 
     def contains_points(self, xsys):
         return self.rect.contains_points( xsys )
+
+    def overlap_fraction(self, other):
+        if isinstance(other, RectangleRepresentation):
+            return self.rect.overlap_with_box(other.rect)/float(self.rect.area)
+        elif isinstance(other, CircleRepresentation):
+            raise NotImplementedError
+        elif isinstance(other, PolygonRepresentation):
+            raise NotImplementedError
+        else:
+            return 0
 
     def get_geometry(self):
         return self.rect

@@ -44,8 +44,8 @@ def load_scene(file, normalize=False):
         u'orange': Color.ORANGE,
         u'red': Color.RED,
         u'green': Color.GREEN,
-        u'purple': Color.PURPLE,
         u'blue': Color.BLUE,
+        u'purple': Color.PURPLE,
         u'pink': Color.PINK,
     }
 
