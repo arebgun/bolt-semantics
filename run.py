@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import random
+from random import random, choice
 from planar import Vec2, BoundingBox
 from speaker import Speaker
 from scene import Scene
@@ -104,74 +104,94 @@ def load_scene(file, normalize=False):
     # speaker.visualize(scene, obj, Vec2(0,0), None, None, '')
     return scene, speaker
 
-def construct_training_scene(random=False):
+def construct_training_scene(random=False, just_shapes=False):
+    object_classes = [ObjectClass.BOX, ObjectClass.CYLINDER, ObjectClass.SPHERE]
+    object_colors = Color.all
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
+    num_objects = len(object_classes) if just_shapes else 5
     table_ll = (-0.4,0.4)
     table_ur = (0.4,1.6)
     if random:
         x_range = (table_ll[0]+0.035, table_ur[0]-0.035)
-        y_range = (table_ll[1]+0.045, table_ur[1]-0.045)
+        y_range = (table_ll[1]+0.035, table_ur[1]-0.035)
         centers = []
-        for _ in range(5):
+        classes = []
+        colors = []
+        for i in range(num_objects):
             condition = True
             while condition:
                 new_point = (randrange(*x_range),randrange(*y_range))
                 condition = (sum( [too_close(new_point,p) for p in centers] ) > 0)
             centers.append( new_point )
+            if just_shapes:
+                classes.append(object_classes[i])
+            else:
+                classes.append( choice(object_classes) )
+            colors.append( choice(object_colors) )
     else:
         centers = [(0.05, 0.9), (0.05, 0.7), (0, 0.55), (-0.3,0.7), (0.3,0.7)]
+        classes = [ObjectClass.CUP, ObjectClass.CUP, ObjectClass.CUP, ObjectClass.PRISM, ObjectClass.PRISM]
+        colors = [Color.GREEN, Color.BLUE, Color.PINK, Color.PURPLE, Color.ORANGE]
 
     table = Landmark('table',
                      RectangleRepresentation(rect=BoundingBox([Vec2(*table_ll), Vec2(*table_ur)])),
                      None,
                      ObjectClass.TABLE)
-
-    obj1 = Landmark('green_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[0][0]-0.035,centers[0][1]-0.035),
-                                                              Vec2(centers[0][0]+0.035,centers[0][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.GREEN)
-
-    obj2 = Landmark('blue_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[1][0]-0.035,centers[1][1]-0.035),
-                                                              Vec2(centers[1][0]+0.035,centers[1][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.BLUE)
-
-    obj3 = Landmark('pink_cup',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[2][0]-0.035,centers[2][1]-0.035),
-                                                              Vec2(centers[2][0]+0.035,centers[2][1]+0.035)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.CUP,
-                    Color.PINK)
-
-    obj4 = Landmark('purple_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[3][0]-0.035,centers[3][1]-0.045),
-                                                              Vec2(centers[3][0]+0.035,centers[3][1]+0.045)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.PRISM,
-                    Color.PURPLE)
-
-    obj5 = Landmark('orange_prism',
-                    RectangleRepresentation(rect=BoundingBox([Vec2(centers[4][0]-0.035,centers[4][1]-0.045),
-                                                              Vec2(centers[4][0]+0.035,centers[4][1]+0.045)]), landmarks_to_get=[]),
-                    None,
-                    ObjectClass.PRISM,
-                    Color.ORANGE)
-
-    # t_rep = table.to_dict()
     scene.add_landmark(table)
-    # scene.add_landmark(serialize.landmark_from_dict(t_rep))
 
-    for obj in (obj1, obj2, obj3, obj4, obj5):
-        # o_rep = obj.to_dict()
+    for i in range(num_objects):
+        obj = Landmark('object %i' % i,
+                        RectangleRepresentation(
+                            rect=BoundingBox([Vec2(centers[i][0]-0.035,
+                                                   centers[i][1]-0.035),
+                                              Vec2(centers[i][0]+0.035,
+                                                   centers[i][1]+0.035)]), 
+                            landmarks_to_get=[]),
+                        None,
+                        classes[i],
+                        None if just_shapes else colors[i])
         obj.representation.alt_representations = []
         scene.add_landmark(obj)
-        # scene.add_landmark(serialize.landmark_from_dict(o_rep))
+
+    # obj2 = Landmark('blue_cup',
+    #                 RectangleRepresentation(rect=BoundingBox([Vec2(centers[1][0]-0.035,centers[1][1]-0.035),
+    #                                                           Vec2(centers[1][0]+0.035,centers[1][1]+0.035)]), landmarks_to_get=[]),
+    #                 None,
+    #                 ObjectClass.CUP,
+    #                 Color.BLUE)
+
+    # obj3 = Landmark('pink_cup',
+    #                 RectangleRepresentation(rect=BoundingBox([Vec2(centers[2][0]-0.035,centers[2][1]-0.035),
+    #                                                           Vec2(centers[2][0]+0.035,centers[2][1]+0.035)]), landmarks_to_get=[]),
+    #                 None,
+    #                 ObjectClass.CUP,
+    #                 Color.PINK)
+
+    # obj4 = Landmark('purple_prism',
+    #                 RectangleRepresentation(rect=BoundingBox([Vec2(centers[3][0]-0.035,centers[3][1]-0.045),
+    #                                                           Vec2(centers[3][0]+0.035,centers[3][1]+0.045)]), landmarks_to_get=[]),
+    #                 None,
+    #                 ObjectClass.PRISM,
+    #                 Color.PURPLE)
+
+    # obj5 = Landmark('orange_prism',
+    #                 RectangleRepresentation(rect=BoundingBox([Vec2(centers[4][0]-0.035,centers[4][1]-0.045),
+    #                                                           Vec2(centers[4][0]+0.035,centers[4][1]+0.045)]), landmarks_to_get=[]),
+    #                 None,
+    #                 ObjectClass.PRISM,
+    #                 Color.ORANGE)
+
+    # t_rep = table.to_dict()
+    # scene.add_landmark(table)
+    # scene.add_landmark(serialize.landmark_from_dict(t_rep))
+
+    # for obj in (obj1, obj2, obj3, obj4, obj5):
+    #     # o_rep = obj.to_dict()
+    #     obj.representation.alt_representations = []
+    #     scene.add_landmark(obj)
+    #     # scene.add_landmark(serialize.landmark_from_dict(o_rep))
 
     return scene, speaker
 

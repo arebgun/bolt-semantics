@@ -94,7 +94,8 @@ class Landmark(object):
     def angle_between(self, viewpoint, other):
         othervec = other.representation.middle - self.representation.middle
         frontvec = viewpoint - self.representation.middle
-        return othervec.angle_to(frontvec)
+        angle = othervec.angle_to(frontvec)
+        return angle
 
     def distance_to(self, rep):
         top_parent = self.get_top_parent()

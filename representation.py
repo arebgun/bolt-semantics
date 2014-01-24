@@ -179,7 +179,7 @@ class LineRepresentation(AbstractRepresentation):
         if ratio is None or ratio >= self.ratio_limit:
             self.landmarks = {
                 'start':  Landmark('start',  PointRepresentation(self.line.start), self, Landmark.END),
-                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.MIDDLE+Landmark.POINT),
+                'middle': Landmark('middle', PointRepresentation(self.line.mid),   self, Landmark.MIDDLE),
                 'end':    Landmark('end',    PointRepresentation(self.line.end),   self, Landmark.END),
             }
         else:
@@ -262,7 +262,7 @@ class CircleRepresentation(AbstractRepresentation):
         self.alt_representations = [PointRepresentation(self.middle, self)]
 
         self.landmarks = {
-            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE+Landmark.POINT)
+            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
         }
 
     @classmethod
@@ -360,15 +360,15 @@ class RectangleRepresentation(AbstractRepresentation):
 
         min_dimension = min(self.rect.height,self.rect.width)
         landmark_constructors = {
-                'll_corner': '''Landmark('ll_corner', PointRepresentation(self.rect.min_point), self, Landmark.CORNER+Landmark.POINT)''',
-                'ur_corner': '''Landmark('ur_corner', PointRepresentation(self.rect.max_point), self, Landmark.CORNER+Landmark.POINT)''',
-                'lr_corner': '''Landmark('lr_corner', PointRepresentation(lrc), self, Landmark.CORNER+Landmark.POINT)''',
-                'ul_corner': '''Landmark('ul_corner', PointRepresentation(ulc), self, Landmark.CORNER+Landmark.POINT)''',
-                'middle':    '''Landmark('middle',    PointRepresentation(self.rect.center), self, Landmark.MIDDLE+Landmark.POINT)''',
-                'l_edge_surf':    '''Landmark('l_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([self.rect.min_point, ulc])), self, Landmark.EDGE+Landmark.LINE)''',
-                'r_edge':    '''Landmark('r_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([lrc, self.rect.max_point])), self, Landmark.EDGE+Landmark.LINE)''',
-                'n_edge':    '''Landmark('n_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([self.rect.min_point, lrc])), self, Landmark.EDGE+Landmark.LINE)''',
-                'f_edge':    '''Landmark('f_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([ulc, self.rect.max_point])), self, Landmark.EDGE+Landmark.LINE)''',
+                'll_corner': '''Landmark('ll_corner', PointRepresentation(self.rect.min_point), self, Landmark.CORNER)''',
+                'ur_corner': '''Landmark('ur_corner', PointRepresentation(self.rect.max_point), self, Landmark.CORNER)''',
+                'lr_corner': '''Landmark('lr_corner', PointRepresentation(lrc), self, Landmark.CORNER)''',
+                'ul_corner': '''Landmark('ul_corner', PointRepresentation(ulc), self, Landmark.CORNER)''',
+                'middle':    '''Landmark('middle',    PointRepresentation(self.rect.center), self, Landmark.MIDDLE)''',
+                'l_edge_surf':    '''Landmark('l_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([self.rect.min_point, ulc])), self, Landmark.EDGEE)''',
+                'r_edge':    '''Landmark('r_edge',    LineRepresentation(vert_ratio, LineSegment.from_points([lrc, self.rect.max_point])), self, Landmark.EDGE)''',
+                'n_edge':    '''Landmark('n_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([self.rect.min_point, lrc])), self, Landmark.EDGE)''',
+                'f_edge':    '''Landmark('f_edge',    LineRepresentation(horiz_ratio, LineSegment.from_points([ulc, self.rect.max_point])), self, Landmark.EDGE)''',
 
                 'l_surf':    '''Landmark('l_surf',    SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                        Vec2(rect.min_point.x+rect.width/2.0,
@@ -394,33 +394,33 @@ class RectangleRepresentation(AbstractRepresentation):
                 'm_surf':    '''Landmark('m_surf',    SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x+rect.width/4.0,
                                                                                             rect.min_point.y+rect.height/4.0),
                                                                                        Vec2(rect.max_point.x-rect.width/4.0,
-                                                                                            rect.max_point.y-rect.height/4.0)])), self, Landmark.MIDDLE+Landmark.SURFACE)''',
+                                                                                            rect.max_point.y-rect.height/4.0)])), self, Landmark.MIDDLE)''',
                 'll_corner_surf': '''Landmark('ll_corner_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                     Vec2(rect.min_point.x+min_dimension/4.0,
-                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER+Landmark.SURFACE)''',
+                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER)''',
                 'ur_corner_surf': '''Landmark('ur_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/4.0,
                                                                                                          rect.max_point.y-min_dimension/4.0),
-                                                                                                    rect.max_point])), self, Landmark.CORNER+Landmark.SURFACE)''',
+                                                                                                    rect.max_point])), self, Landmark.CORNER)''',
                 'lr_corner_surf': '''Landmark('lr_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/4.0,
                                                                                                          rect.min_point.y),
                                                                                                     Vec2(rect.min_point.x,
-                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER+Landmark.SURFACE)''',
+                                                                                                         rect.min_point.y+min_dimension/4.0)])), self, Landmark.CORNER)''',
                 'ul_corner_surf': '''Landmark('ul_corner_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x,
                                                                                                          rect.max_point.y-min_dimension/4.0),
                                                                                                     Vec2(rect.min_point.x+min_dimension/4.0,
-                                                                                                         rect.max_point.y)])), self, Landmark.CORNER+Landmark.SURFACE)''',
+                                                                                                         rect.max_point.y)])), self, Landmark.CORNER)''',
                 'l_edge_surf':    '''Landmark('l_edge_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                  Vec2(rect.min_point.x+min_dimension/8.0,
-                                                                                                      rect.max_point.y)])), self, Landmark.EDGE+Landmark.SURFACE)''',
+                                                                                                      rect.max_point.y)])), self, Landmark.EDGE)''',
                 'r_edge_surf':    '''Landmark('r_edge_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.max_point.x-min_dimension/8.0,
                                                                                                       rect.min_point.y),
-                                                                                                 rect.max_point])), self, Landmark.EDGE+Landmark.SURFACE)''',
+                                                                                                 rect.max_point])), self, Landmark.EDGE)''',
                 'n_edge_surf':    '''Landmark('n_edge_surf', SurfaceRepresentation( BoundingBox([rect.min_point,
                                                                                                  Vec2(rect.max_point.x,
-                                                                                                      rect.min_point.y+min_dimension/8.0)])), self, Landmark.EDGE+Landmark.SURFACE)''',
+                                                                                                      rect.min_point.y+min_dimension/8.0)])), self, Landmark.EDGE)''',
                 'f_edge_surf':    '''Landmark('f_edge_surf', SurfaceRepresentation( BoundingBox([Vec2(rect.min_point.x,
                                                                                                       rect.max_point.y-min_dimension/8.0),
-                                                                                                 rect.max_point])), self, Landmark.EDGE+Landmark.SURFACE)''',
+                                                                                                 rect.max_point])), self, Landmark.EDGE)''',
         }
 
         self.landmarks = {}
@@ -559,7 +559,7 @@ class PolygonRepresentation(AbstractRepresentation):
         self.num_dim = 2
         self.middle = poly.centroid
         self.landmarks = {
-            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE+Landmark.POINT)
+            'middle': Landmark('middle', PointRepresentation(self.middle), self, Landmark.MIDDLE)
         }
 
     @classmethod
