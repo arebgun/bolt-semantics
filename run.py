@@ -106,7 +106,7 @@ def load_scene(file, normalize=False):
 
 def construct_training_scene(random=False, just_shapes=False):
     object_classes = [ObjectClass.BOX, ObjectClass.CYLINDER, ObjectClass.SPHERE]
-    object_colors = Color.all
+    object_colors = [Color.RED, Color.GREEN, Color.BLUE, Color.BLACK, Color.WHITE]#Color.all
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
