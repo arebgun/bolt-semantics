@@ -106,7 +106,7 @@ def load_scene(file, normalize=False):
 
 def construct_training_scene(random=False, just_shapes=False):
     object_classes = [ObjectClass.BOX, ObjectClass.CYLINDER, ObjectClass.SPHERE]
-    object_colors = [Color.RED, Color.GREEN, Color.BLUE, Color.BLACK, Color.WHITE]#Color.all
+    object_colors = [Color.RED, Color.GREEN, Color.BLUE, Color.BLACK,Color.WHITE]#, Color.YELLOW, Color.ORANGE, Color.PURPLE, Color.PINK]#Color.all
     speaker = Speaker(Vec2(0,0))
     scene = Scene(3)
 
@@ -198,6 +198,7 @@ def construct_training_scene(random=False, just_shapes=False):
 def read_scenes(dir, normalize=False, image=False):
     infos = []
     for root, dirs, files in os.walk(dir): # Walk directory tree
+        print root
         scene_info = []
         for name in files:
             if image and '.png' in name:
@@ -205,8 +206,9 @@ def read_scenes(dir, normalize=False, image=False):
                 scene_info.append(img)
             if '.json' in name:
                 scene, speaker = load_scene(os.path.join(root, name), normalize)
-                scene_info.insert(0,scene)
-                scene_info.insert(1,speaker)
+                scene_info.insert(0,int(root[-1]))
+                scene_info.insert(1,scene)
+                scene_info.insert(2,speaker)
         if scene_info:
             infos.append(scene_info)
     return infos

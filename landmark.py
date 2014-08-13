@@ -5,6 +5,7 @@ import sys
 sys.path.insert(1,"..")
 from myrandom import random
 choice = random.choice
+import representation as reps
 
 import numpy as np
 
@@ -92,12 +93,19 @@ class Landmark(object):
         return self.representation.contains(other.representation)
 
     def angle_between(self, viewpoint, other):
+        if isinstance(self.representation, reps.SurfaceRepresentation):
+            return float('nan')
+        if self.get_top_parent() != self.representation:
+            return float('nan')
         othervec = other.representation.middle - self.representation.middle
         frontvec = viewpoint - self.representation.middle
         angle = othervec.angle_to(frontvec)
         return angle
 
     def distance_to(self, rep):
+        if (isinstance(rep, reps.SurfaceRepresentation) or 
+           isinstance(self.representation, reps.SurfaceRepresentation)):
+            return float('nan')
         top_parent = self.get_top_parent()
         min_dist = float('inf')
 
